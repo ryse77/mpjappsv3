@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle, Clock, Shield } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, Shield, Eye, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,16 +10,42 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const pesantrenData = [
+interface PesantrenData {
+  id: string;
+  namaPesantren: string;
+  regional: string;
+  status: string;
+  pendingDays: number;
+  namaPengasuh: string;
+  email: string;
+  noHp: string;
+  alamat: string;
+  jumlahSantri: number;
+  tanggalDaftar: string;
+}
+
+const pesantrenData: PesantrenData[] = [
   {
     id: "MPJ-001",
     namaPesantren: "PP Al Hikmah",
     regional: "Malang Raya",
     status: "active",
     pendingDays: 0,
+    namaPengasuh: "KH. Ahmad Fauzi",
+    email: "alhikmah@email.com",
+    noHp: "081234567890",
+    alamat: "Jl. Raya Malang No. 123",
+    jumlahSantri: 450,
+    tanggalDaftar: "2024-01-15",
   },
   {
     id: "MPJ-002",
@@ -27,6 +53,12 @@ const pesantrenData = [
     regional: "Probolinggo Raya",
     status: "active",
     pendingDays: 0,
+    namaPengasuh: "KH. Muhammad Hasan",
+    email: "nuruljadid@email.com",
+    noHp: "082345678901",
+    alamat: "Jl. Paiton No. 45",
+    jumlahSantri: 1200,
+    tanggalDaftar: "2024-01-20",
   },
   {
     id: "MPJ-003",
@@ -34,6 +66,12 @@ const pesantrenData = [
     regional: "Situbondo",
     status: "pending",
     pendingDays: 5,
+    namaPengasuh: "KH. Abdul Hamid",
+    email: "salafiyah@email.com",
+    noHp: "083456789012",
+    alamat: "Jl. Situbondo Raya No. 78",
+    jumlahSantri: 800,
+    tanggalDaftar: "2024-12-08",
   },
   {
     id: "MPJ-004",
@@ -41,6 +79,12 @@ const pesantrenData = [
     regional: "Jombang",
     status: "active",
     pendingDays: 0,
+    namaPengasuh: "KH. Cholil Bisri",
+    email: "darululum@email.com",
+    noHp: "084567890123",
+    alamat: "Jl. Rejoso Peterongan",
+    jumlahSantri: 950,
+    tanggalDaftar: "2024-02-10",
   },
   {
     id: "MPJ-005",
@@ -48,6 +92,12 @@ const pesantrenData = [
     regional: "Kediri Raya",
     status: "active",
     pendingDays: 0,
+    namaPengasuh: "KH. Anwar Manshur",
+    email: "lirboyo@email.com",
+    noHp: "085678901234",
+    alamat: "Jl. Lirboyo Kediri",
+    jumlahSantri: 1500,
+    tanggalDaftar: "2024-01-05",
   },
   {
     id: "MPJ-006",
@@ -55,6 +105,12 @@ const pesantrenData = [
     regional: "Sidoarjo-Pasuruan",
     status: "pending",
     pendingDays: 4,
+    namaPengasuh: "KH. Nawawi Abdul Jalil",
+    email: "sidogiri@email.com",
+    noHp: "086789012345",
+    alamat: "Jl. Sidogiri Pasuruan",
+    jumlahSantri: 2000,
+    tanggalDaftar: "2024-12-09",
   },
   {
     id: "MPJ-007",
@@ -62,6 +118,12 @@ const pesantrenData = [
     regional: "Jombang",
     status: "pending",
     pendingDays: 2,
+    namaPengasuh: "KH. Salahuddin Wahid",
+    email: "tebuireng@email.com",
+    noHp: "087890123456",
+    alamat: "Jl. Tebuireng Jombang",
+    jumlahSantri: 1800,
+    tanggalDaftar: "2024-12-11",
   },
   {
     id: "MPJ-008",
@@ -69,6 +131,12 @@ const pesantrenData = [
     regional: "Jombang",
     status: "active",
     pendingDays: 0,
+    namaPengasuh: "KH. Hasib Wahab",
+    email: "bahrululum@email.com",
+    noHp: "088901234567",
+    alamat: "Jl. Tambakberas Jombang",
+    jumlahSantri: 700,
+    tanggalDaftar: "2024-03-01",
   },
   {
     id: "MPJ-009",
@@ -76,6 +144,12 @@ const pesantrenData = [
     regional: "Madura Raya",
     status: "pending",
     pendingDays: 7,
+    namaPengasuh: "KH. Moh. Tidjani Djauhari",
+    email: "miftahululum@email.com",
+    noHp: "089012345678",
+    alamat: "Jl. Pamekasan Madura",
+    jumlahSantri: 600,
+    tanggalDaftar: "2024-12-06",
   },
   {
     id: "MPJ-010",
@@ -83,20 +157,34 @@ const pesantrenData = [
     regional: "Jember-Lumajang",
     status: "active",
     pendingDays: 0,
+    namaPengasuh: "KH. Sofyan Tsauri",
+    email: "mambaulm@email.com",
+    noHp: "080123456789",
+    alamat: "Jl. Denanyar Jember",
+    jumlahSantri: 550,
+    tanggalDaftar: "2024-02-25",
   },
 ];
 
 const DataMaster = () => {
   const [data, setData] = useState(pesantrenData);
+  const [selectedPesantren, setSelectedPesantren] = useState<PesantrenData | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  const handleForceApprove = (id: string) => {
+  const handleViewDetail = (item: PesantrenData) => {
+    setSelectedPesantren(item);
+    setIsDetailOpen(true);
+  };
+
+  const handleApprove = (id: string) => {
     setData(
       data.map((item) =>
         item.id === id ? { ...item, status: "active", pendingDays: 0 } : item
       )
     );
-    toast.success("Force Approve berhasil!", {
-      description: `Pesantren ${id} telah diaktifkan secara manual.`,
+    setIsDetailOpen(false);
+    toast.success("Approve berhasil!", {
+      description: `Pesantren ${id} telah diaktifkan.`,
     });
   };
 
@@ -131,7 +219,7 @@ const DataMaster = () => {
           <p className="font-medium text-amber-800">Perhatian!</p>
           <p className="text-sm text-amber-700">
             Terdapat {data.filter((d) => d.pendingDays > 3).length} pesantren dengan status pending lebih dari 3 hari.
-            Segera lakukan validasi atau force approve jika diperlukan.
+            Segera lakukan validasi atau approve jika diperlukan.
           </p>
         </div>
       </div>
@@ -182,26 +270,26 @@ const DataMaster = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {item.status === "pending" && item.pendingDays > 3 ? (
-                        <Button
-                          size="sm"
-                          onClick={() => handleForceApprove(item.id)}
-                          className="bg-orange-500 hover:bg-orange-600 text-white"
-                        >
-                          <AlertTriangle className="h-4 w-4 mr-1" />
-                          Force Approve (Take Over)
-                        </Button>
-                      ) : item.status === "pending" ? (
+                      <div className="flex items-center gap-2">
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => handleViewDetail(item)}
                           className="text-slate-600"
                         >
-                          Menunggu Validasi
+                          <Eye className="h-4 w-4 mr-1" />
+                          Lihat Detail
                         </Button>
-                      ) : (
-                        <span className="text-sm text-slate-500">-</span>
-                      )}
+                        {item.status === "pending" && item.pendingDays > 3 && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(item.id)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                          >
+                            Approve
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -210,6 +298,91 @@ const DataMaster = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-emerald-600" />
+              Detail Pesantren
+            </DialogTitle>
+          </DialogHeader>
+          {selectedPesantren && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-500">ID Pesantren</p>
+                  <p className="font-mono font-medium text-slate-800">{selectedPesantren.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Status</p>
+                  {getStatusBadge(selectedPesantren.status)}
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm text-slate-500">Nama Pesantren</p>
+                <p className="font-semibold text-slate-800">{selectedPesantren.namaPesantren}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-slate-500">Nama Pengasuh</p>
+                <p className="font-medium text-slate-800">{selectedPesantren.namaPengasuh}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-500">Email</p>
+                  <p className="text-slate-800">{selectedPesantren.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">No HP/WhatsApp</p>
+                  <p className="text-slate-800">{selectedPesantren.noHp}</p>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm text-slate-500">Alamat</p>
+                <p className="text-slate-800">{selectedPesantren.alamat}</p>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-slate-500">Regional</p>
+                  <p className="font-medium text-slate-800">{selectedPesantren.regional}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Jumlah Santri</p>
+                  <p className="font-medium text-slate-800">{selectedPesantren.jumlahSantri}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Tanggal Daftar</p>
+                  <p className="text-slate-800">{selectedPesantren.tanggalDaftar}</p>
+                </div>
+              </div>
+
+              {selectedPesantren.status === "pending" && (
+                <div className="pt-4 border-t flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDetailOpen(false)}
+                  >
+                    Tutup
+                  </Button>
+                  <Button
+                    onClick={() => handleApprove(selectedPesantren.id)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Approve
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
