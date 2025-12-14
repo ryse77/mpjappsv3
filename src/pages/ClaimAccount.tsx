@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Check, ArrowLeft, MapPin } from "lucide-react";
+import { Search, Check, ArrowLeft, MapPin, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock legacy data with demo account
@@ -33,6 +33,31 @@ const mockLegacyData = [
     alamat: "Jl. Raya Gontor, Ponorogo",
     pendaftar: "Abdul Karim"
   },
+  // Mock data yang sesuai dengan CheckInstitution
+  { 
+    id: 4, 
+    email: "darululum@mpj.com", 
+    phone: "084567890123", 
+    pesantren: "Darul Ulum Jombang",
+    alamat: "Jl. Raya Peterongan, Jombang",
+    pendaftar: "KH. Ahmad Sahal"
+  },
+  { 
+    id: 5, 
+    email: "tebuireng@mpj.com", 
+    phone: "085678901234", 
+    pesantren: "Tebuireng Jombang",
+    alamat: "Jl. Irian Jaya No. 10, Jombang",
+    pendaftar: "KH. Salahuddin Wahid"
+  },
+  { 
+    id: 6, 
+    email: "petik@mpj.com", 
+    phone: "086789012345", 
+    pesantren: "PeTIK Jombang",
+    alamat: "Jl. Raya Diwek, Jombang",
+    pendaftar: "Ustadz Teknologi"
+  },
 ];
 
 // Mask name function
@@ -47,12 +72,38 @@ const maskName = (name: string) => {
 type Step = "search" | "preview";
 
 const ClaimAccount = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Data dari CheckInstitution
+  const pesantrenFromSearch = location.state?.pesantrenName || null;
+  const pesantrenIdFromSearch = location.state?.pesantrenId || null;
+  const fromSearch = location.state?.fromSearch || false;
+
   const [step, setStep] = useState<Step>("search");
   const [searchQuery, setSearchQuery] = useState("");
   const [foundData, setFoundData] = useState<typeof mockLegacyData[0] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+
+  // Auto-search jika datang dari CheckInstitution dengan pesantren terpilih
+  useEffect(() => {
+    if (fromSearch && pesantrenFromSearch) {
+      // Cari data legacy berdasarkan nama pesantren
+      const found = mockLegacyData.find(
+        (item) => item.pesantren.toLowerCase().includes(pesantrenFromSearch.toLowerCase())
+      );
+
+      if (found) {
+        setFoundData(found);
+        setStep("preview");
+        toast({
+          title: "Data Ditemukan!",
+          description: `Pesantren "${pesantrenFromSearch}" ditemukan di database.`,
+        });
+      }
+    }
+  }, [fromSearch, pesantrenFromSearch]);
 
   const handleSearch = () => {
     if (!searchQuery.trim()) {
@@ -111,33 +162,59 @@ const ClaimAccount = () => {
     }, 800);
   };
 
+  const handleBack = () => {
+    if (fromSearch) {
+      navigate("/check-institution");
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary via-primary/90 to-primary">
-      {/* Header - No Logo */}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#166534] via-[#166534]/90 to-[#166534]">
+      {/* Header */}
       <div className="flex-shrink-0 pt-6 pb-4 px-4">
-        <Link to="/login" className="inline-flex items-center text-primary-foreground/80 text-sm mb-4">
+        <button onClick={handleBack} className="inline-flex items-center text-white/80 text-sm mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Kembali
-        </Link>
+        </button>
         <div>
-          <h1 className="text-xl font-bold text-primary-foreground">Klaim Akun</h1>
-          <p className="text-xs text-primary-foreground/70">Migrasi Khodim Lama</p>
+          <h1 className="text-xl font-bold text-white">Klaim Akun</h1>
+          <p className="text-xs text-white/70">Migrasi Khodim Lama</p>
         </div>
       </div>
 
       {/* Content Card */}
-      <div className="flex-1 bg-card rounded-t-3xl px-5 pt-5 pb-8">
+      <div className="flex-1 bg-white rounded-t-3xl px-5 pt-5 pb-8">
+        {/* Pesantren Info dari CheckInstitution */}
+        {fromSearch && pesantrenFromSearch && (
+          <div className="mb-5 p-4 bg-[#166534]/5 border border-[#166534]/20 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#166534]/10 rounded-full flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-[#166534]" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Pesantren Terpilih</p>
+                <p className="font-semibold text-gray-900">{pesantrenFromSearch}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: Search */}
         {step === "search" && (
           <div className="space-y-5">
             <div className="text-center py-2">
-              <p className="text-sm text-muted-foreground">
-                Masukkan email atau nomor HP yang terdaftar pada sistem MPJ sebelumnya
+              <p className="text-sm text-gray-500">
+                {fromSearch 
+                  ? "Verifikasi identitas Anda untuk mengklaim akun pesantren ini"
+                  : "Masukkan email atau nomor HP yang terdaftar pada sistem MPJ sebelumnya"
+                }
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="search" className="text-sm">Email atau No. HP Terdaftar</Label>
+              <Label htmlFor="search" className="text-sm text-gray-700">Email atau No. HP Terdaftar</Label>
               <div className="relative">
                 <Input
                   id="search"
@@ -145,29 +222,29 @@ const ClaimAccount = () => {
                   placeholder="email@example.com atau 08xxx"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-12 rounded-xl border-border/50 pr-12 bg-muted/30"
+                  className="h-12 rounded-xl border-gray-200 pr-12 bg-gray-50 focus:border-[#166534] focus:ring-[#166534]"
                 />
-                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               </div>
             </div>
 
             <Button
               onClick={handleSearch}
               disabled={isLoading}
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+              className="w-full h-12 rounded-xl bg-[#166534] hover:bg-[#14532d] text-white font-semibold"
             >
               {isLoading ? "Mencari..." : "Cari Data Saya"}
             </Button>
 
             {/* Demo Account Info */}
-            <div className="p-3 bg-muted/30 rounded-xl">
-              <p className="text-xs text-center text-muted-foreground mb-1 font-medium">Demo Akun Legacy:</p>
-              <p className="text-xs text-center text-muted-foreground">demo@mpj.com atau 082345678901</p>
+            <div className="p-3 bg-gray-50 rounded-xl">
+              <p className="text-xs text-center text-gray-500 mb-1 font-medium">Demo Akun Legacy:</p>
+              <p className="text-xs text-center text-gray-500">demo@mpj.com atau 082345678901</p>
             </div>
 
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-gray-500">
               Belum pernah terdaftar?{" "}
-              <Link to="/register" className="text-emerald-500 font-semibold">
+              <Link to="/check-institution" className="text-[#166534] font-semibold">
                 Daftar Baru
               </Link>
             </p>
@@ -178,32 +255,32 @@ const ClaimAccount = () => {
         {step === "preview" && foundData && (
           <div className="space-y-5">
             <div className="text-center py-2">
-              <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Check className="h-7 w-7 text-emerald-500" />
+              <div className="w-14 h-14 bg-[#166534]/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Check className="h-7 w-7 text-[#166534]" />
               </div>
-              <h2 className="text-lg font-bold text-foreground mb-1">Data Ditemukan</h2>
-              <p className="text-sm text-muted-foreground">Apakah ini data Anda?</p>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Data Ditemukan</h2>
+              <p className="text-sm text-gray-500">Apakah ini data Anda?</p>
             </div>
 
-            <Card className="bg-muted/20 border-border/50">
+            <Card className="bg-gray-50 border-gray-200">
               <CardContent className="p-4 space-y-3">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Nama Pesantren</p>
-                  <p className="text-sm font-semibold text-foreground">{foundData.pesantren}</p>
+                  <p className="text-xs text-gray-500 mb-1">Nama Pesantren</p>
+                  <p className="text-sm font-semibold text-gray-900">{foundData.pesantren}</p>
                 </div>
                 
                 <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Alamat</p>
-                    <p className="text-sm text-foreground">{foundData.alamat}</p>
+                    <p className="text-xs text-gray-500 mb-1">Alamat</p>
+                    <p className="text-sm text-gray-700">{foundData.alamat}</p>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-border/30">
-                  <p className="text-xs text-muted-foreground mb-1">Nama Pendaftar</p>
-                  <p className="text-sm font-medium text-foreground">{maskName(foundData.pendaftar)}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">*Nama disamarkan untuk keamanan</p>
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Nama Pendaftar</p>
+                  <p className="text-sm font-medium text-gray-900">{maskName(foundData.pendaftar)}</p>
+                  <p className="text-[10px] text-gray-400 mt-1">*Nama disamarkan untuk keamanan</p>
                 </div>
               </CardContent>
             </Card>
@@ -216,14 +293,14 @@ const ClaimAccount = () => {
                   setFoundData(null);
                   setSearchQuery("");
                 }}
-                className="flex-1 h-11 rounded-xl border-border/50"
+                className="flex-1 h-11 rounded-xl border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Bukan, Cari Lagi
               </Button>
               <Button
                 onClick={handleConfirm}
                 disabled={isLoading}
-                className="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white"
+                className="flex-1 h-11 rounded-xl bg-[#f59e0b] hover:bg-[#d97706] text-white"
               >
                 {isLoading ? "Memproses..." : "Ya, Kirim OTP"}
               </Button>
