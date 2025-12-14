@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Calendar, Upload, Plus, Trash2, Search, Download, UserPlus, FileText, Lock, Image } from "lucide-react";
+import { ArrowLeft, Upload, Plus, Trash2, Search, Download, UserPlus, FileText, Lock, Image, Eye, Check, X, CreditCard, Users, Clock, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EventData, EventStatus } from "./EventCard";
 
@@ -19,6 +19,15 @@ interface Participant {
   asalPesantren: string;
   waktuKlaim: string;
   metode: "App Token" | "Manual Admin";
+}
+
+interface Registrant {
+  id: string;
+  nama: string;
+  pesantren: string;
+  waktuDaftar: string;
+  status: "PENDING" | "PAID" | "REJECTED";
+  buktiTransfer?: string;
 }
 
 interface EventDetailViewProps {
@@ -49,6 +58,21 @@ const mockParticipants: Participant[] = [
   { id: "3", nama: "Muhammad Rizki", asalPesantren: "PP Darul Ulum", waktuKlaim: "2024-01-15 11:30", metode: "App Token" },
 ];
 
+const mockRegistrants: Registrant[] = [
+  { id: "1", nama: "Ahmad Fauzi", pesantren: "PP Nurul Huda", waktuDaftar: "2024-12-10 09:00", status: "PAID", buktiTransfer: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=300&h=400&fit=crop" },
+  { id: "2", nama: "Siti Aminah", pesantren: "PP Al-Hikam", waktuDaftar: "2024-12-11 14:30", status: "PENDING", buktiTransfer: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=300&h=400&fit=crop" },
+  { id: "3", nama: "Muhammad Rizki", pesantren: "PP Darul Ulum", waktuDaftar: "2024-12-12 10:15", status: "PENDING", buktiTransfer: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=300&h=400&fit=crop" },
+  { id: "4", nama: "Fatimah Zahra", pesantren: "PP Salafiyah", waktuDaftar: "2024-12-12 16:45", status: "REJECTED" },
+  { id: "5", nama: "Abdullah Hasan", pesantren: "PP Al-Amin", waktuDaftar: "2024-12-13 08:00", status: "PENDING", buktiTransfer: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=300&h=400&fit=crop" },
+];
+
+// Mock bank account from regional settings
+const regionalBankAccount = {
+  bankName: "Bank Jatim",
+  accountNumber: "0123456789",
+  accountHolder: "MPJ Media Regional Malang",
+};
+
 const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("proposal");
@@ -62,8 +86,7 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
     waktu: event.waktu,
     lokasi: event.lokasi,
     lokasiManual: "",
-    linkPendaftaran: "",
-    estimasiBiaya: "",
+    biayaPendaftaran: "",
     panitia: [{ role: "", users: [] as string[] }],
   });
 
@@ -79,6 +102,8 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
     claimEnabled: false,
   });
 
+  const [registrants, setRegistrants] = useState<Registrant[]>(mockRegistrants);
+  const [selectedProofImage, setSelectedProofImage] = useState<string | null>(null);
   const [participants, setParticipants] = useState<Participant[]>(mockParticipants);
   const [searchParticipant, setSearchParticipant] = useState("");
   const [manualUserSearch, setManualUserSearch] = useState("");
@@ -96,6 +121,10 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
     u.nama.toLowerCase().includes(manualUserSearch.toLowerCase()) ||
     u.pesantren.toLowerCase().includes(manualUserSearch.toLowerCase())
   );
+
+  // Stats for Tab 2
+  const pendingCount = registrants.filter((r) => r.status === "PENDING").length;
+  const paidCount = registrants.filter((r) => r.status === "PAID").length;
 
   const handlePosterUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,17 +159,6 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
       return;
     }
 
-    if (proposalForm.linkPendaftaran && 
-        !proposalForm.linkPendaftaran.includes("forms.google.com") &&
-        !proposalForm.linkPendaftaran.includes("forms.gle")) {
-      toast({
-        title: "Link tidak valid",
-        description: "Link pendaftaran harus menggunakan Google Forms.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const updatedEvent = {
       ...currentEvent,
       judul: proposalForm.judul,
@@ -154,7 +172,28 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
 
     toast({
       title: "Proposal berhasil disimpan",
-      description: "Data event telah diperbarui.",
+      description: "Data event telah dipublikasikan.",
+    });
+  };
+
+  const handleApproveRegistrant = (registrantId: string) => {
+    setRegistrants(registrants.map((r) => 
+      r.id === registrantId ? { ...r, status: "PAID" as const } : r
+    ));
+    toast({
+      title: "Pembayaran diverifikasi",
+      description: "Status pendaftar telah diubah ke LUNAS. Notifikasi telah dikirim.",
+    });
+  };
+
+  const handleRejectRegistrant = (registrantId: string) => {
+    setRegistrants(registrants.map((r) => 
+      r.id === registrantId ? { ...r, status: "REJECTED" as const } : r
+    ));
+    toast({
+      title: "Pendaftaran ditolak",
+      description: "Pendaftar telah diberitahu untuk upload ulang bukti transfer.",
+      variant: "destructive",
     });
   };
 
@@ -223,6 +262,17 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
     return false;
   };
 
+  const getStatusBadge = (status: Registrant["status"]) => {
+    switch (status) {
+      case "PAID":
+        return <Badge className="bg-emerald-600">Lunas</Badge>;
+      case "PENDING":
+        return <Badge variant="secondary" className="bg-amber-500 text-white">Menunggu</Badge>;
+      case "REJECTED":
+        return <Badge variant="destructive">Ditolak</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -246,31 +296,41 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
         <CardContent className="pt-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="overflow-x-auto -mx-6 px-6 mb-6">
-              <TabsList className="inline-flex w-auto min-w-full sm:w-full justify-start sm:justify-center">
-                <TabsTrigger value="proposal" className="flex-shrink-0">
-                  <FileText className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Proposal Event</span>
-                  <span className="sm:hidden">Proposal</span>
+              <TabsList className="inline-flex w-auto min-w-full sm:w-full justify-start sm:justify-center gap-1">
+                <TabsTrigger value="proposal" className="flex-shrink-0 text-xs sm:text-sm">
+                  <FileText className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden md:inline">Info & Edit</span>
+                  <span className="md:hidden">Info</span>
                 </TabsTrigger>
-                <TabsTrigger value="laporan" className="flex-shrink-0">
-                  <FileText className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Laporan Kegiatan</span>
-                  <span className="sm:hidden">Laporan</span>
+                <TabsTrigger value="verifikasi" className="flex-shrink-0 text-xs sm:text-sm">
+                  <CreditCard className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden md:inline">Verifikasi</span>
+                  <span className="md:hidden">Bayar</span>
+                  {pendingCount > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {pendingCount}
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="sertifikat" className="flex-shrink-0" disabled={isTabLocked("sertifikat")}>
-                  {isTabLocked("sertifikat") ? <Lock className="h-4 w-4 mr-2" /> : <Image className="h-4 w-4 mr-2" />}
-                  <span className="hidden sm:inline">Setting Sertifikat</span>
-                  <span className="sm:hidden">Sertifikat</span>
+                <TabsTrigger value="laporan" className="flex-shrink-0 text-xs sm:text-sm">
+                  <FileText className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden md:inline">Laporan</span>
+                  <span className="md:hidden">LPJ</span>
                 </TabsTrigger>
-                <TabsTrigger value="peserta" className="flex-shrink-0" disabled={isTabLocked("peserta")}>
-                  {isTabLocked("peserta") ? <Lock className="h-4 w-4 mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-                  <span className="hidden sm:inline">Data Peserta</span>
-                  <span className="sm:hidden">Peserta</span>
+                <TabsTrigger value="sertifikat" className="flex-shrink-0 text-xs sm:text-sm" disabled={isTabLocked("sertifikat")}>
+                  {isTabLocked("sertifikat") ? <Lock className="h-4 w-4 mr-1 sm:mr-2" /> : <Image className="h-4 w-4 mr-1 sm:mr-2" />}
+                  <span className="hidden md:inline">Sertifikat</span>
+                  <span className="md:hidden">Sert</span>
+                </TabsTrigger>
+                <TabsTrigger value="peserta" className="flex-shrink-0 text-xs sm:text-sm" disabled={isTabLocked("peserta")}>
+                  {isTabLocked("peserta") ? <Lock className="h-4 w-4 mr-1 sm:mr-2" /> : <Users className="h-4 w-4 mr-1 sm:mr-2" />}
+                  <span className="hidden md:inline">Peserta</span>
+                  <span className="md:hidden">Hadir</span>
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            {/* TAB 1: PROPOSAL EVENT */}
+            {/* TAB 1: INFO & EDIT (PROPOSAL) */}
             <TabsContent value="proposal" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
@@ -366,33 +426,38 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="link">Link Pendaftaran (Google Forms)</Label>
-                    <Input
-                      id="link"
-                      type="url"
-                      placeholder="https://forms.google.com/..."
-                      value={proposalForm.linkPendaftaran}
-                      onChange={(e) => setProposalForm({ ...proposalForm, linkPendaftaran: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="biaya">Estimasi Biaya (Rp)</Label>
+                    <Label htmlFor="biaya">Biaya Pendaftaran (Rp)</Label>
                     <Input
                       id="biaya"
                       type="number"
-                      placeholder="500000"
-                      value={proposalForm.estimasiBiaya}
-                      onChange={(e) => setProposalForm({ ...proposalForm, estimasiBiaya: e.target.value })}
+                      placeholder="50000 (0 = Gratis)"
+                      value={proposalForm.biayaPendaftaran}
+                      onChange={(e) => setProposalForm({ ...proposalForm, biayaPendaftaran: e.target.value })}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Jika {'>'} 0, pendaftar akan diminta upload bukti transfer di aplikasi.
+                    </p>
                   </div>
+
+                  {/* Bank Account Info (Read-only from Regional Settings) */}
+                  {proposalForm.biayaPendaftaran && parseInt(proposalForm.biayaPendaftaran) > 0 && (
+                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                      <Label className="text-xs text-muted-foreground">Rekening Tujuan (dari Setting Regional)</Label>
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{regionalBankAccount.bankName}</span>
+                      </div>
+                      <p className="text-sm">{regionalBankAccount.accountNumber}</p>
+                      <p className="text-xs text-muted-foreground">a.n. {regionalBankAccount.accountHolder}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Susunan Panitia */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label>Susunan Panitia (Jobdesk)</Label>
+                  <Label>Susunan Panitia (Gamifikasi)</Label>
                   <Button variant="outline" size="sm" onClick={handleAddPanitia}>
                     <Plus className="h-4 w-4 mr-1" /> Tambah
                   </Button>
@@ -433,11 +498,124 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
               </div>
 
               <Button onClick={handleSubmitProposal} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700">
-                Simpan Perubahan
+                Simpan & Publikasikan
               </Button>
             </TabsContent>
 
-            {/* TAB 2: LAPORAN KEGIATAN */}
+            {/* TAB 2: VERIFIKASI PENDAFTAR (PAYMENT) */}
+            <TabsContent value="verifikasi" className="space-y-6">
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="p-2 bg-amber-500 rounded-full">
+                      <Clock className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{pendingCount}</p>
+                      <p className="text-sm text-amber-600 dark:text-amber-500">Menunggu Verifikasi</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500 rounded-full">
+                      <Check className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{paidCount}</p>
+                      <p className="text-sm text-emerald-600 dark:text-emerald-500">Lunas</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Registrants Table */}
+              <div className="overflow-x-auto rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">No</TableHead>
+                      <TableHead>Pendaftar</TableHead>
+                      <TableHead className="hidden sm:table-cell">Waktu Daftar</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {registrants.map((registrant, index) => (
+                      <TableRow key={registrant.id}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{registrant.nama}</p>
+                            <p className="text-sm text-muted-foreground">{registrant.pesantren}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">
+                          {registrant.waktuDaftar}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(registrant.status)}</TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-1">
+                            {registrant.buktiTransfer && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedProofImage(registrant.buktiTransfer!)}>
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-md">
+                                  <DialogHeader>
+                                    <DialogTitle>Bukti Transfer</DialogTitle>
+                                    <DialogDescription>{registrant.nama} - {registrant.pesantren}</DialogDescription>
+                                  </DialogHeader>
+                                  <div className="mt-4">
+                                    <img 
+                                      src={registrant.buktiTransfer} 
+                                      alt="Bukti Transfer" 
+                                      className="w-full rounded-lg border"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                                      Gambar dikompresi max 100KB untuk loading cepat
+                                    </p>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+                            {registrant.status === "PENDING" && (
+                              <>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                  onClick={() => handleApproveRegistrant(registrant.id)}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleRejectRegistrant(registrant.id)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Total: {registrants.length} pendaftar
+              </p>
+            </TabsContent>
+
+            {/* TAB 3: LAPORAN KEGIATAN */}
             <TabsContent value="laporan" className="space-y-6">
               <Card className="bg-muted/50">
                 <CardHeader className="pb-2">
@@ -491,11 +669,11 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
               </div>
 
               <Button onClick={handleSubmitLaporan} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700">
-                Simpan Laporan
+                Simpan & Selesaikan Event
               </Button>
             </TabsContent>
 
-            {/* TAB 3: SETTING SERTIFIKAT */}
+            {/* TAB 4: SETTING SERTIFIKAT */}
             <TabsContent value="sertifikat" className="space-y-6">
               {isTabLocked("sertifikat") ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -510,7 +688,7 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
                       <Label htmlFor="token">Kode Token Sertifikat *</Label>
                       <Input
                         id="token"
-                        placeholder="e.g., MPJ-01"
+                        placeholder="e.g., JATIM-01"
                         value={sertifikatForm.tokenCode}
                         onChange={(e) => setSertifikatForm({ ...sertifikatForm, tokenCode: e.target.value })}
                       />
@@ -560,7 +738,7 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
               )}
             </TabsContent>
 
-            {/* TAB 4: DATA PESERTA */}
+            {/* TAB 5: DATA PESERTA */}
             <TabsContent value="peserta" className="space-y-6">
               {isTabLocked("peserta") ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -593,7 +771,7 @@ const EventDetailView = ({ event, onBack, onUpdateEvent }: EventDetailViewProps)
                           <DialogHeader>
                             <DialogTitle>Input Peserta Manual</DialogTitle>
                             <DialogDescription>
-                              Cari dan tambahkan peserta yang tidak bisa klaim via aplikasi.
+                              Cari dan tambahkan peserta yang tidak bisa klaim via aplikasi (mitigasi).
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4">
