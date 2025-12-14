@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import logoMpj from "@/assets/logo-mpj.png";
 
 // Demo accounts for testing
 const demoAccounts = [
@@ -67,12 +66,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-900">
-      {/* Header with Logo */}
-      <div className="flex-shrink-0 pt-8 pb-4 px-6 text-center">
-        <img src={logoMpj} alt="MPJ" className="h-12 w-12 mx-auto mb-3 object-contain" />
-        <h1 className="text-xl font-bold text-white">Selamat Datang</h1>
-        <p className="text-sm text-emerald-200/70 mt-1">Masuk ke akun MPJ Apps</p>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary via-primary/90 to-primary">
+      {/* Header - No Logo */}
+      <div className="flex-shrink-0 pt-10 pb-6 px-6 text-center">
+        <h1 className="text-2xl font-bold text-primary-foreground">Selamat Datang</h1>
+        <p className="text-sm text-primary-foreground/70 mt-1">Masuk ke akun MPJ Apps</p>
       </div>
 
       {/* Form Card */}

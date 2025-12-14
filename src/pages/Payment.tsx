@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, Copy, Check, ArrowRight, ArrowLeft, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import logoMpj from "@/assets/logo-mpj.png";
 
 // Generate random 3 digits for unique payment amount
 const generateUniqueCode = () => Math.floor(Math.random() * 900) + 100;
@@ -131,21 +130,18 @@ const Payment = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-900">
-      {/* Header */}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary via-primary/90 to-primary">
+      {/* Header - No Logo */}
       <div className="flex-shrink-0 pt-6 pb-3 px-4">
-        <Link to="/login" className="inline-flex items-center text-emerald-200/80 text-sm mb-3">
+        <Link to="/login" className="inline-flex items-center text-primary-foreground/80 text-sm mb-3">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Kembali
         </Link>
-        <div className="flex items-center gap-3">
-          <img src={logoMpj} alt="MPJ" className="h-10 w-10 object-contain" />
-          <div>
-            <h1 className="text-lg font-bold text-white">Pembayaran</h1>
-            <p className="text-xs text-emerald-200/70">
-              {type === "claim" ? "Aktivasi Akun" : "Registrasi Baru"}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-xl font-bold text-primary-foreground">Pembayaran</h1>
+          <p className="text-xs text-primary-foreground/70">
+            {type === "claim" ? "Aktivasi Akun" : "Registrasi Baru"}
+          </p>
         </div>
       </div>
 
