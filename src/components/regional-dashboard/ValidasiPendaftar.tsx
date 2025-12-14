@@ -17,9 +17,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, CheckCircle, XCircle, UserCheck, Image, ZoomIn, X, Search } from "lucide-react";
+import { Eye, CheckCircle, XCircle, UserCheck, Image, ZoomIn, X, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface Pendaftar {
@@ -37,78 +44,50 @@ interface Pendaftar {
   status: "pending" | "approved" | "rejected";
 }
 
-const dummyData: Pendaftar[] = [
-  {
-    id: 1,
-    tanggal: "12 Dec 2024",
-    namaPesantren: "PP Al Hikmah",
-    namaMedia: "@alhikmah_official",
-    kecamatan: "Lowokwaru",
-    pengasuh: "KH. Ahmad Fauzi",
-    alamat: "Jl. Sumbersari No. 45, Malang",
-    email: "alhikmah@gmail.com",
-    noHp: "081234567890",
-    nominal: "Rp 50.231",
-    buktiTransfer: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400",
-    status: "pending",
-  },
-  {
-    id: 2,
-    tanggal: "11 Dec 2024",
-    namaPesantren: "PP Nurul Jadid",
-    namaMedia: "@nuruljadid_mlg",
-    kecamatan: "Sukun",
-    pengasuh: "KH. Mahmud Hasan",
-    alamat: "Jl. Raya Tlogomas No. 12, Malang",
-    email: "nuruljadid@gmail.com",
-    noHp: "081345678901",
-    nominal: "Rp 20.147",
-    buktiTransfer: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400",
-    status: "pending",
-  },
-  {
-    id: 3,
-    tanggal: "10 Dec 2024",
-    namaPesantren: "PP Darul Ulum",
-    namaMedia: "@darulum_malang",
-    kecamatan: "Blimbing",
-    pengasuh: "KH. Zainal Abidin",
-    alamat: "Jl. Arjuno No. 78, Malang",
-    email: "darulum@gmail.com",
-    noHp: "081456789012",
-    nominal: "Rp 50.089",
-    buktiTransfer: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400",
-    status: "pending",
-  },
-  {
-    id: 4,
-    tanggal: "09 Dec 2024",
-    namaPesantren: "PP Al Falah",
-    namaMedia: "@alfalah_media",
-    kecamatan: "Kedungkandang",
-    pengasuh: "KH. Ridwan Nawawi",
-    alamat: "Jl. Sawojajar No. 33, Malang",
-    email: "alfalah@gmail.com",
-    noHp: "081567890123",
-    nominal: "Rp 20.312",
-    buktiTransfer: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400",
-    status: "approved",
-  },
-  {
-    id: 5,
-    tanggal: "08 Dec 2024",
-    namaPesantren: "PP Miftahul Huda",
-    namaMedia: "@miftahulhuda_id",
-    kecamatan: "Klojen",
-    pengasuh: "KH. Syamsul Arifin",
-    alamat: "Jl. Ijen No. 56, Malang",
-    email: "miftahulhuda@gmail.com",
-    noHp: "081678901234",
-    nominal: "Rp 50.456",
-    buktiTransfer: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400",
-    status: "rejected",
-  },
-];
+// Generate more dummy data for pagination demo
+const generateDummyData = (): Pendaftar[] => {
+  const baseData = [
+    { namaPesantren: "PP Al Hikmah", namaMedia: "@alhikmah_official", kecamatan: "Lowokwaru", pengasuh: "KH. Ahmad Fauzi" },
+    { namaPesantren: "PP Nurul Jadid", namaMedia: "@nuruljadid_mlg", kecamatan: "Sukun", pengasuh: "KH. Mahmud Hasan" },
+    { namaPesantren: "PP Darul Ulum", namaMedia: "@darulum_malang", kecamatan: "Blimbing", pengasuh: "KH. Zainal Abidin" },
+    { namaPesantren: "PP Al Falah", namaMedia: "@alfalah_media", kecamatan: "Kedungkandang", pengasuh: "KH. Ridwan Nawawi" },
+    { namaPesantren: "PP Miftahul Huda", namaMedia: "@miftahulhuda_id", kecamatan: "Klojen", pengasuh: "KH. Syamsul Arifin" },
+    { namaPesantren: "PP Raudlatul Ulum", namaMedia: "@raudlatululum", kecamatan: "Singosari", pengasuh: "KH. Abdullah Faqih" },
+    { namaPesantren: "PP Bahrul Maghfiroh", namaMedia: "@bahrul_id", kecamatan: "Pakis", pengasuh: "KH. Gus Baha" },
+    { namaPesantren: "PP Salafiyah Syafiiyah", namaMedia: "@salafiyah_mlg", kecamatan: "Gondanglegi", pengasuh: "KH. Hasyim Asyari" },
+    { namaPesantren: "PP Al Ittihad", namaMedia: "@alittihad_media", kecamatan: "Turen", pengasuh: "KH. Wahid Hasyim" },
+    { namaPesantren: "PP Nurul Huda", namaMedia: "@nurulhuda_malang", kecamatan: "Bululawang", pengasuh: "KH. Idris Marzuqi" },
+  ];
+
+  const statuses: Array<"pending" | "approved" | "rejected"> = ["pending", "approved", "rejected"];
+  const data: Pendaftar[] = [];
+
+  for (let i = 0; i < 50; i++) {
+    const base = baseData[i % baseData.length];
+    const day = 14 - (i % 14);
+    const nominal = Math.random() > 0.5 ? 50 : 20;
+    const uniqueCode = Math.floor(Math.random() * 900) + 100;
+
+    data.push({
+      id: i + 1,
+      tanggal: `${day < 10 ? '0' + day : day} Dec 2024`,
+      namaPesantren: i < 10 ? base.namaPesantren : `${base.namaPesantren} ${Math.floor(i / 10) + 1}`,
+      namaMedia: i < 10 ? base.namaMedia : `${base.namaMedia}${Math.floor(i / 10) + 1}`,
+      kecamatan: base.kecamatan,
+      pengasuh: base.pengasuh,
+      alamat: `Jl. Raya No. ${i + 1}, Malang`,
+      email: `pesantren${i + 1}@gmail.com`,
+      noHp: `08123456${String(i).padStart(4, '0')}`,
+      nominal: `Rp ${nominal}.${uniqueCode}`,
+      buktiTransfer: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400",
+      status: i < 15 ? "pending" : statuses[i % 3],
+    });
+  }
+
+  return data;
+};
+
+const dummyData = generateDummyData();
 
 const ValidasiPendaftar = () => {
   const [loading, setLoading] = useState(true);
@@ -119,6 +98,10 @@ const ValidasiPendaftar = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const { toast } = useToast();
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -136,7 +119,44 @@ const ValidasiPendaftar = () => {
         item.namaMedia.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredData(filtered);
+    setCurrentPage(1); // Reset to first page when search changes
   }, [searchQuery, data]);
+
+  // Pagination calculations
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
+  const paginatedData = filteredData.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleRowsPerPageChange = (value: string) => {
+    setRowsPerPage(Number(value));
+    setCurrentPage(1);
+  };
+
+  const getVisiblePages = () => {
+    const pages: number[] = [];
+    const maxVisible = 3;
+    
+    if (totalPages <= maxVisible + 2) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 2) {
+        pages.push(1, 2, 3);
+      } else if (currentPage >= totalPages - 1) {
+        pages.push(totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(currentPage - 1, currentPage, currentPage + 1);
+      }
+    }
+    return pages;
+  };
 
   const handlePeriksaClick = (pendaftar: Pendaftar) => {
     setSelectedPendaftar(pendaftar);
@@ -245,7 +265,7 @@ const ValidasiPendaftar = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData.map((item, index) => (
+                {paginatedData.map((item, index) => (
                   <TableRow 
                     key={item.id} 
                     className={`${index % 2 === 0 ? "bg-card" : "bg-muted/30"} hover:bg-muted/50 transition-colors`}
@@ -268,7 +288,7 @@ const ValidasiPendaftar = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filteredData.length === 0 && (
+                {paginatedData.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       Tidak ada data ditemukan
@@ -277,6 +297,124 @@ const ValidasiPendaftar = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="border-t border-border px-4 py-3">
+            {/* Mobile: Simple Prev/Next */}
+            <div className="flex sm:hidden items-center justify-between">
+              <span className="text-sm text-muted-foreground">
+                {startIndex + 1}-{endIndex} dari {totalItems}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="min-h-[44px] min-w-[44px]"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="min-h-[44px] min-w-[44px]"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Desktop: Full Controls */}
+            <div className="hidden sm:flex items-center justify-between">
+              {/* Left: Showing entries */}
+              <span className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{endIndex} of {totalItems} entries
+              </span>
+
+              {/* Center: Rows per page */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Rows per page:</span>
+                <Select value={String(rowsPerPage)} onValueChange={handleRowsPerPageChange}>
+                  <SelectTrigger className="w-[70px] h-9 bg-card">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card z-50">
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Right: Page buttons */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-9"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+                
+                {currentPage > 2 && totalPages > 4 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                      className="h-9 w-9 p-0"
+                    >
+                      1
+                    </Button>
+                    {currentPage > 3 && <span className="px-2 text-muted-foreground">...</span>}
+                  </>
+                )}
+
+                {getVisiblePages().map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageChange(page)}
+                    className={`h-9 w-9 p-0 ${currentPage === page ? "bg-sidebar text-sidebar-foreground hover:bg-sidebar/90" : ""}`}
+                  >
+                    {page}
+                  </Button>
+                ))}
+
+                {currentPage < totalPages - 1 && totalPages > 4 && (
+                  <>
+                    {currentPage < totalPages - 2 && <span className="px-2 text-muted-foreground">...</span>}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages)}
+                      className="h-9 w-9 p-0"
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="h-9"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
