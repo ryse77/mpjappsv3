@@ -16,7 +16,8 @@ const Payment = () => {
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedAccount, setCopiedAccount] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
   const [uniqueCode, setUniqueCode] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -38,13 +39,23 @@ const Payment = () => {
     accountName: "MEDIA PONDOK JAWA TIMUR",
   };
 
-  const handleCopy = () => {
+  const handleCopyAccount = () => {
     navigator.clipboard.writeText(bankInfo.accountNumber);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedAccount(true);
+    setTimeout(() => setCopiedAccount(false), 2000);
     toast({
       title: "Disalin!",
       description: "Nomor rekening telah disalin",
+    });
+  };
+
+  const handleCopyAmount = () => {
+    navigator.clipboard.writeText(totalTagihan.toString());
+    setCopiedAmount(true);
+    setTimeout(() => setCopiedAmount(false), 2000);
+    toast({
+      title: "Disalin!",
+      description: "Nominal tagihan telah disalin",
     });
   };
 
@@ -142,10 +153,20 @@ const Payment = () => {
       <div className="flex-1 bg-card rounded-t-3xl px-5 pt-5 pb-8 overflow-y-auto">
         {/* Amount Card */}
         <Card className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white mb-5">
-          <CardContent className="p-4 text-center">
-            <p className="text-xs opacity-90 mb-1">Total Tagihan</p>
-            <p className="text-2xl font-bold">Rp {formatCurrency(totalTagihan)},-</p>
-            <p className="text-[10px] opacity-75 mt-1">
+          <CardContent className="p-4">
+            <p className="text-xs opacity-90 mb-1 text-center">Total Tagihan</p>
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-2xl font-bold">Rp {formatCurrency(totalTagihan)},-</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyAmount}
+                className="h-8 w-8 p-0 hover:bg-white/20"
+              >
+                {copiedAmount ? <Check className="h-4 w-4 text-white" /> : <Copy className="h-4 w-4 text-white/80" />}
+              </Button>
+            </div>
+            <p className="text-[10px] opacity-75 mt-1 text-center">
               *Nominal unik untuk verifikasi otomatis
             </p>
           </CardContent>
@@ -173,10 +194,10 @@ const Payment = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleCopy}
+                  onClick={handleCopyAccount}
                   className="h-8 px-2"
                 >
-                  {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                  {copiedAccount ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">a.n. {bankInfo.accountName}</p>
