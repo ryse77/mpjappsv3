@@ -7,15 +7,49 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-// Daftar Kota/Kabupaten Jawa Timur
-const kotaKabupaten = [
-  "Surabaya", "Malang", "Sidoarjo", "Gresik", "Mojokerto", "Pasuruan",
-  "Probolinggo", "Lumajang", "Jember", "Banyuwangi", "Bondowoso",
-  "Situbondo", "Kediri", "Blitar", "Tulungagung", "Trenggalek",
-  "Nganjuk", "Madiun", "Magetan", "Ngawi", "Ponorogo", "Pacitan",
-  "Bojonegoro", "Tuban", "Lamongan", "Jombang", "Bangkalan",
-  "Sampang", "Pamekasan", "Sumenep"
-];
+// Mapping Kota/Kabupaten ke Regional ID (Jawa Timur)
+const regionalData: Record<string, { regional_id: string; regional_name: string }> = {
+  "Kab. Malang": { regional_id: "01", regional_name: "MALANG RAYA" },
+  "Kota Malang": { regional_id: "01", regional_name: "MALANG RAYA" },
+  "Kota Batu": { regional_id: "01", regional_name: "MALANG RAYA" },
+  "Kab. Blitar": { regional_id: "02", regional_name: "BLITAR RAYA" },
+  "Kota Blitar": { regional_id: "02", regional_name: "BLITAR RAYA" },
+  "Kab. Kediri": { regional_id: "03", regional_name: "KEDIRI RAYA" },
+  "Kota Kediri": { regional_id: "03", regional_name: "KEDIRI RAYA" },
+  "Kab. Tulungagung": { regional_id: "04", regional_name: "TULUNGAGUNG - TRENGGALEK" },
+  "Kab. Trenggalek": { regional_id: "04", regional_name: "TULUNGAGUNG - TRENGGALEK" },
+  "Kab. Nganjuk": { regional_id: "05", regional_name: "NGANJUK - JOMBANG" },
+  "Kab. Jombang": { regional_id: "05", regional_name: "NGANJUK - JOMBANG" },
+  "Kab. Madiun": { regional_id: "06", regional_name: "MADIUN RAYA" },
+  "Kota Madiun": { regional_id: "06", regional_name: "MADIUN RAYA" },
+  "Kab. Magetan": { regional_id: "06", regional_name: "MADIUN RAYA" },
+  "Kab. Ngawi": { regional_id: "06", regional_name: "MADIUN RAYA" },
+  "Kab. Ponorogo": { regional_id: "07", regional_name: "PONOROGO - PACITAN" },
+  "Kab. Pacitan": { regional_id: "07", regional_name: "PONOROGO - PACITAN" },
+  "Kab. Bojonegoro": { regional_id: "08", regional_name: "BOJONEGORO - TUBAN" },
+  "Kab. Tuban": { regional_id: "08", regional_name: "BOJONEGORO - TUBAN" },
+  "Kab. Lamongan": { regional_id: "09", regional_name: "LAMONGAN - GRESIK" },
+  "Kab. Gresik": { regional_id: "09", regional_name: "LAMONGAN - GRESIK" },
+  "Kota Surabaya": { regional_id: "10", regional_name: "SURABAYA RAYA" },
+  "Kab. Sidoarjo": { regional_id: "10", regional_name: "SURABAYA RAYA" },
+  "Kab. Mojokerto": { regional_id: "11", regional_name: "MOJOKERTO - PASURUAN" },
+  "Kota Mojokerto": { regional_id: "11", regional_name: "MOJOKERTO - PASURUAN" },
+  "Kab. Pasuruan": { regional_id: "11", regional_name: "MOJOKERTO - PASURUAN" },
+  "Kota Pasuruan": { regional_id: "11", regional_name: "MOJOKERTO - PASURUAN" },
+  "Kab. Probolinggo": { regional_id: "12", regional_name: "PROBOLINGGO - LUMAJANG" },
+  "Kota Probolinggo": { regional_id: "12", regional_name: "PROBOLINGGO - LUMAJANG" },
+  "Kab. Lumajang": { regional_id: "12", regional_name: "PROBOLINGGO - LUMAJANG" },
+  "Kab. Jember": { regional_id: "13", regional_name: "JEMBER" },
+  "Kab. Bondowoso": { regional_id: "14", regional_name: "BONDOWOSO - SITUBONDO" },
+  "Kab. Situbondo": { regional_id: "14", regional_name: "BONDOWOSO - SITUBONDO" },
+  "Kab. Banyuwangi": { regional_id: "15", regional_name: "BANYUWANGI" },
+  "Kab. Bangkalan": { regional_id: "16", regional_name: "MADURA BARAT" },
+  "Kab. Sampang": { regional_id: "16", regional_name: "MADURA BARAT" },
+  "Kab. Pamekasan": { regional_id: "17", regional_name: "MADURA TIMUR" },
+  "Kab. Sumenep": { regional_id: "17", regional_name: "MADURA TIMUR" },
+};
+
+const kotaKabupatenList = Object.keys(regionalData);
 
 const InstitutionSubmission = () => {
   const navigate = useNavigate();
@@ -30,6 +64,8 @@ const InstitutionSubmission = () => {
     alamatLengkap: "",
     kotaKabupaten: "",
     emailResmi: "",
+    regional_id: "",
+    regional_name: "",
   });
 
   // Section B: Data Koordinator
@@ -47,7 +83,17 @@ const InstitutionSubmission = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handlePesantrenChange = (field: string, value: string) => {
-    setPesantrenData((prev) => ({ ...prev, [field]: value }));
+    if (field === "kotaKabupaten") {
+      const region = regionalData[value];
+      setPesantrenData((prev) => ({
+        ...prev,
+        kotaKabupaten: value,
+        regional_id: region?.regional_id || "",
+        regional_name: region?.regional_name || "",
+      }));
+    } else {
+      setPesantrenData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleKoordinatorChange = (field: string, value: string) => {
@@ -239,7 +285,7 @@ const InstitutionSubmission = () => {
                   <SelectValue placeholder="Pilih kota/kabupaten" />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-50 max-h-60">
-                  {kotaKabupaten.map((kota) => (
+                  {kotaKabupatenList.map((kota) => (
                     <SelectItem key={kota} value={kota}>
                       {kota}
                     </SelectItem>

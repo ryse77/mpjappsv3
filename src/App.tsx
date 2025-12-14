@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import ClaimAccount from "./pages/ClaimAccount";
 import VerifyOTP from "./pages/VerifyOTP";
 import Payment from "./pages/Payment";
@@ -31,7 +30,6 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/check-institution" element={<CheckInstitution />} />
           <Route path="/institution-submission" element={<InstitutionSubmission />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/claim-account" element={<ClaimAccount />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/payment" element={<Payment />} />
