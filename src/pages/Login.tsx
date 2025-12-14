@@ -158,8 +158,8 @@ const Login = () => {
         {/* Register Link */}
         <p className="text-center text-sm text-muted-foreground">
           Baru di MPJ Apps?{" "}
-          <Link to="/register" className="text-emerald-500 font-semibold">
-            Daftar Pesantren Baru
+          <Link to="/check-institution" className="text-emerald-500 font-semibold">
+            Buat Akun Baru
           </Link>
         </p>
 
