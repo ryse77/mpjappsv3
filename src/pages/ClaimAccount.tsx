@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Check, ArrowLeft, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import logoMpj from "@/assets/logo-mpj.png";
 
 // Mock legacy data with demo account
 const mockLegacyData = [
@@ -113,19 +112,16 @@ const ClaimAccount = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-900">
-      {/* Header */}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary via-primary/90 to-primary">
+      {/* Header - No Logo */}
       <div className="flex-shrink-0 pt-6 pb-4 px-4">
-        <Link to="/login" className="inline-flex items-center text-emerald-200/80 text-sm mb-4">
+        <Link to="/login" className="inline-flex items-center text-primary-foreground/80 text-sm mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Kembali
         </Link>
-        <div className="flex items-center gap-3">
-          <img src={logoMpj} alt="MPJ" className="h-10 w-10 object-contain" />
-          <div>
-            <h1 className="text-lg font-bold text-white">Klaim Akun</h1>
-            <p className="text-xs text-emerald-200/70">Migrasi Khodim Lama</p>
-          </div>
+        <div>
+          <h1 className="text-xl font-bold text-primary-foreground">Klaim Akun</h1>
+          <p className="text-xs text-primary-foreground/70">Migrasi Khodim Lama</p>
         </div>
       </div>
 

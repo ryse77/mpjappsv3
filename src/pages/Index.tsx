@@ -5,30 +5,33 @@ import {
   Users,
   Calendar,
   ArrowRight,
+  Zap,
+  Sparkles,
 } from "lucide-react";
 
 const Index = () => {
   const stats = [
-    { label: "Pesantren", value: "700+", icon: Building2, bgColor: "bg-primary/10", iconColor: "text-primary" },
-    { label: "Khodim", value: "1500+", icon: Users, bgColor: "bg-accent/15", iconColor: "text-accent" },
-    { label: "Events", value: "50+", icon: Calendar, bgColor: "bg-primary/10", iconColor: "text-primary" },
+    { label: "Anggota Aktif", value: "1000+", icon: Users, bgColor: "bg-primary/10", iconColor: "text-primary" },
+    { label: "Event Terlaksana", value: "50+", icon: Calendar, bgColor: "bg-accent/15", iconColor: "text-accent" },
+    { label: "Total XP Terdistribusi", value: "100K+", icon: Zap, bgColor: "bg-primary/10", iconColor: "text-primary" },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/30 to-background">
-      {/* Navigation - Clean & Simple */}
+      {/* Navigation - Desktop shows buttons, Mobile hides them */}
       <nav className="sticky top-0 bg-background/80 backdrop-blur-md border-b border-border/50 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <span className="font-bold text-primary text-lg">MPJ Apps</span>
-          <div className="flex items-center gap-3">
+          {/* Desktop only buttons */}
+          <div className="hidden sm:flex items-center gap-3">
             <Link to="/login">
-              <Button variant="outline" size="sm" className="h-9 px-4 rounded-full border-border hover:bg-secondary">
+              <Button variant="ghost" size="sm" className="h-9 px-4 text-foreground hover:bg-secondary">
                 Masuk
               </Button>
             </Link>
             <Link to="/register">
-              <Button size="sm" className="h-9 px-4 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground font-medium shadow-md">
-                Daftar Sekarang
+              <Button size="sm" className="h-9 px-5 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground font-medium shadow-md">
+                Daftar Gratis
               </Button>
             </Link>
           </div>
@@ -36,35 +39,41 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="px-4 sm:px-6 pt-12 sm:pt-20 pb-8 sm:pb-12">
+      <section className="px-4 sm:px-6 pt-10 sm:pt-20 pb-8 sm:pb-12">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left Content */}
             <div className="text-center lg:text-left">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary leading-tight mb-4">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/30 rounded-full mb-6">
+                <Sparkles className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">Platform Komunitas Digital Pesantren</span>
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-primary leading-tight mb-5">
                 Media Pondok<br />Jawa Timur
               </h1>
               
               <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-md mx-auto lg:mx-0 leading-relaxed">
-                Platform Digital Komunitas Media Pesantren Terbesar
+                Bergabunglah dengan komunitas media pesantren terbesar di Jawa Timur. Kembangkan skill, raih achievement, dan jadilah bagian dari perubahan digital.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                <Link to="/login">
-                  <Button variant="outline" className="w-full sm:w-auto h-12 px-6 rounded-full border-2 border-border hover:bg-secondary font-medium">
-                    Masuk
+                <Link to="/register">
+                  <Button className="w-full sm:w-auto h-12 px-7 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold shadow-lg shadow-accent/25">
+                    Mulai Sekarang
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/register">
-                  <Button className="w-full sm:w-auto h-12 px-6 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold shadow-lg shadow-accent/25">
-                    Daftar Sekarang
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to="/login">
+                  <Button variant="outline" className="w-full sm:w-auto h-12 px-6 rounded-full border-2 border-border hover:bg-secondary font-medium">
+                    Pelajari Lebih Lanjut
                   </Button>
                 </Link>
               </div>
             </div>
 
-            {/* Right - Stats Cards */}
+            {/* Right - Stats Cards (Desktop) */}
             <div className="hidden lg:block">
               <div className="bg-gradient-to-br from-primary/5 via-secondary to-accent/5 rounded-3xl p-6 shadow-soft">
                 <div className="space-y-4">
