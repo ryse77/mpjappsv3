@@ -178,7 +178,7 @@ const ManajemenEvent = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Daftar Kegiatan Regional</h1>
+          <h1 className="text-2xl font-bold text-foreground">Daftar Kegiatan Wilayah</h1>
           <p className="text-muted-foreground">
             {filteredEvents.length} event ditemukan
           </p>
