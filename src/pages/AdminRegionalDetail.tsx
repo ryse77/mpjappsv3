@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Area, AreaChart, Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 const regionalData: Record<string, {
   name: string;
@@ -139,6 +141,24 @@ const regionalData: Record<string, {
   }
 };
 
+const memberGrowthData = [
+  { month: "Jul", members: 850 },
+  { month: "Agu", members: 920 },
+  { month: "Sep", members: 980 },
+  { month: "Okt", members: 1050 },
+  { month: "Nov", members: 1150 },
+  { month: "Des", members: 1250 },
+];
+
+const monthlyRegistrationData = [
+  { month: "Jul", pesantren: 8, kru: 25 },
+  { month: "Agu", members: 12, pesantren: 10, kru: 32 },
+  { month: "Sep", members: 15, pesantren: 12, kru: 38 },
+  { month: "Okt", members: 18, pesantren: 14, kru: 45 },
+  { month: "Nov", members: 22, pesantren: 18, kru: 52 },
+  { month: "Des", members: 28, pesantren: 22, kru: 60 },
+];
+
 const recentPesantren = [
   { id: 1, name: "PP. Nurul Huda", kyai: "KH. Ahmad", members: 45, status: "active" },
   { id: 2, name: "PP. Darul Ulum", kyai: "KH. Mahmud", members: 38, status: "active" },
@@ -146,6 +166,12 @@ const recentPesantren = [
   { id: 4, name: "PP. Roudlotul Quran", kyai: "KH. Sholeh", members: 28, status: "pending" },
   { id: 5, name: "PP. Miftahul Ulum", kyai: "KH. Ridwan", members: 33, status: "active" },
 ];
+
+const chartConfig = {
+  members: { label: "Member", color: "hsl(160, 84%, 39%)" },
+  pesantren: { label: "Pesantren", color: "hsl(217, 91%, 60%)" },
+  kru: { label: "Kru", color: "hsl(38, 92%, 50%)" },
+};
 
 const AdminRegionalDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -259,6 +285,84 @@ const AdminRegionalDetail = () => {
                   <p className="text-2xl font-bold text-green-600">{region.growth}</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          {/* Member Growth Trend */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
+                Tren Pertumbuhan Member
+              </CardTitle>
+              <CardDescription>6 bulan terakhir</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <AreaChart data={memberGrowthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="memberGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(160, 84%, 39%)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(160, 84%, 39%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                    dataKey="month" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12 }} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12 }} 
+                    width={40}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area
+                    type="monotone"
+                    dataKey="members"
+                    stroke="hsl(160, 84%, 39%)"
+                    strokeWidth={2}
+                    fill="url(#memberGradient)"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          {/* Monthly Registrations */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                Pendaftaran Bulanan
+              </CardTitle>
+              <CardDescription>Pesantren & Kru baru per bulan</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <BarChart data={monthlyRegistrationData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <XAxis 
+                    dataKey="month" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12 }} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12 }} 
+                    width={40}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="pesantren" fill="hsl(217, 91%, 60%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="kru" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
             </CardContent>
           </Card>
         </div>
