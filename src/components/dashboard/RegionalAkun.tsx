@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Users, Mail, Phone, Shield, Edit2, Plus, Eye, EyeOff, Search, Check, X } from "lucide-react";
+import { Users, Mail, Phone, Shield, Edit2, Plus, Eye, EyeOff, Search, Check, X, Archive, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,10 +80,11 @@ interface AdminAccount {
   email: string;
   phone: string;
   regional: string;
-  status: "active" | "inactive";
+  status: "active" | "suspended" | "archived";
   createdAt: string;
 }
 
+// Demo data: 5 admins with 1 archived, 1 suspended as specified
 const initialAccounts: AdminAccount[] = [
   {
     id: "ADM-001",
@@ -117,7 +119,7 @@ const initialAccounts: AdminAccount[] = [
     email: "admin.kediri@mpj.id",
     phone: "084567890123",
     regional: "MPJ Kediri Raya",
-    status: "active",
+    status: "suspended",
     createdAt: "2024-02-10",
   },
   {
@@ -126,7 +128,7 @@ const initialAccounts: AdminAccount[] = [
     email: "admin.madura@mpj.id",
     phone: "085678901234",
     regional: "MPJ Madura Raya",
-    status: "inactive",
+    status: "archived",
     createdAt: "2024-03-01",
   },
 ];
@@ -159,8 +161,18 @@ const RegionalAkun = () => {
   });
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [accountToToggle, setAccountToToggle] = useState<AdminAccount | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended" | "archived">("all");
 
-  // Filter out users who are already assigned as regional admins
+  // Filter accounts based on search and status
+  const filteredAccounts = accounts.filter((account) => {
+    const matchesSearch = 
+      account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      account.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      account.regional.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || account.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
   const assignedEmails = accounts.map((acc) => acc.email.toLowerCase());
   const availableUsers = mockUsers.filter(
     (user) => !assignedEmails.includes(user.email.toLowerCase())
@@ -248,13 +260,22 @@ const RegionalAkun = () => {
     setAccounts((prev) =>
       prev.map((acc) =>
         acc.id === id
-          ? { ...acc, status: acc.status === "active" ? "inactive" : "active" }
+          ? { ...acc, status: acc.status === "active" ? "suspended" as const : "active" as const }
           : acc
       )
     );
     toast.success("Status akun berhasil diubah!");
     setStatusDialogOpen(false);
     setAccountToToggle(null);
+  };
+
+  const handleArchive = (account: AdminAccount) => {
+    setAccounts((prev) =>
+      prev.map((acc) =>
+        acc.id === account.id ? { ...acc, status: "archived" as const } : acc
+      )
+    );
+    toast.success(`Akun ${account.name} berhasil diarsipkan!`);
   };
 
   return (
@@ -274,7 +295,7 @@ const RegionalAkun = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-white border-0 shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
@@ -308,13 +329,28 @@ const RegionalAkun = () => {
         <Card className="bg-white border-0 shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-                <Shield className="h-5 w-5 text-slate-500" />
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Shield className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Non-Aktif</p>
+                <p className="text-sm text-slate-500">Suspended</p>
+                <p className="text-2xl font-bold text-amber-600">
+                  {accounts.filter((a) => a.status === "suspended").length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-white border-0 shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                <Archive className="h-5 w-5 text-slate-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Diarsipkan</p>
                 <p className="text-2xl font-bold text-slate-500">
-                  {accounts.filter((a) => a.status === "inactive").length}
+                  {accounts.filter((a) => a.status === "archived").length}
                 </p>
               </div>
             </div>
@@ -324,11 +360,34 @@ const RegionalAkun = () => {
 
       {/* Table */}
       <Card className="bg-white border-0 shadow-sm">
-        <CardHeader>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle className="text-lg text-slate-800 flex items-center gap-2">
             <Users className="h-5 w-5 text-emerald-600" />
             Daftar Admin Regional
           </CardTitle>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Cari nama/email/regional..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full sm:w-64"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={(value: "all" | "active" | "suspended" | "archived") => setStatusFilter(value)}>
+              <SelectTrigger className="w-full sm:w-40">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter Status" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="all">Semua</SelectItem>
+                <SelectItem value="active">Aktif</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
+                <SelectItem value="archived">Diarsipkan</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -344,7 +403,7 @@ const RegionalAkun = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {accounts.map((account) => (
+                {filteredAccounts.map((account) => (
                   <TableRow key={account.id} className="border-slate-100">
                     <TableCell>
                       <p className="font-medium text-slate-800">{account.name}</p>
@@ -371,12 +430,14 @@ const RegionalAkun = () => {
                       <span
                         className={cn(
                           "inline-flex items-center text-xs font-medium px-2 py-1 rounded-full",
-                          account.status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-slate-100 text-slate-600"
+                          account.status === "active" && "bg-green-100 text-green-700",
+                          account.status === "suspended" && "bg-amber-100 text-amber-700",
+                          account.status === "archived" && "bg-slate-100 text-slate-600"
                         )}
                       >
-                        {account.status === "active" ? "Aktif" : "Non-Aktif"}
+                        {account.status === "active" && "Aktif"}
+                        {account.status === "suspended" && "Suspended"}
+                        {account.status === "archived" && "Diarsipkan"}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -389,18 +450,30 @@ const RegionalAkun = () => {
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleToggleStatus(account)}
-                          className={cn(
-                            account.status === "active"
-                              ? "text-red-600 hover:bg-red-50"
-                              : "text-green-600 hover:bg-green-50"
-                          )}
-                        >
-                          {account.status === "active" ? "Nonaktifkan" : "Aktifkan"}
-                        </Button>
+                        {account.status !== "archived" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleStatus(account)}
+                            className={cn(
+                              account.status === "active"
+                                ? "text-amber-600 hover:bg-amber-50"
+                                : "text-green-600 hover:bg-green-50"
+                            )}
+                          >
+                            {account.status === "active" ? "Suspend" : "Aktifkan"}
+                          </Button>
+                        )}
+                        {account.status !== "archived" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleArchive(account)}
+                            className="text-slate-500 hover:bg-slate-50"
+                          >
+                            <Archive className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

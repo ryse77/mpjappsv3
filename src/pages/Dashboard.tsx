@@ -254,28 +254,30 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+        {/* Top Bar - Clean Minimalist */}
+        <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-slate-600 hover:text-slate-800"
               onClick={() => setMobileSidebarOpen(true)}
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-800">
-                Halo, Super Admin
-              </h2>
-              <p className="text-sm text-slate-500">Selamat datang di dashboard</p>
+            <h2 className="text-lg font-medium text-slate-800">
+              Halo, Super Admin
+            </h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full" />
+            </Button>
+            <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
+              <span className="text-sm font-semibold text-emerald-700">SA</span>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5 text-slate-600" />
-            <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
-          </Button>
         </header>
 
         {/* Page Content */}
