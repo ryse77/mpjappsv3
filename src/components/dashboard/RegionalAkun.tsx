@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Mail, Phone, Shield, Edit2, Trash2, Plus, Eye, EyeOff } from "lucide-react";
+import { Users, Mail, Phone, Shield, Edit2, Plus, Eye, EyeOff, Search, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +26,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+// Mock users data for searchable combobox
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+const mockUsers: User[] = [
+  { id: "USR-001", name: "Ahmad Fauzi", email: "ahmad.fauzi@gmail.com", phone: "081234567890" },
+  { id: "USR-002", name: "Siti Aminah", email: "siti.aminah@gmail.com", phone: "082345678901" },
+  { id: "USR-003", name: "Muhammad Hasan", email: "m.hasan@gmail.com", phone: "083456789012" },
+  { id: "USR-004", name: "Fatimah Zahra", email: "fatimah.z@gmail.com", phone: "084567890123" },
+  { id: "USR-005", name: "Abdullah Rahman", email: "abdullah.r@gmail.com", phone: "085678901234" },
+  { id: "USR-006", name: "Khadijah Nur", email: "khadijah.nur@gmail.com", phone: "086789012345" },
+  { id: "USR-007", name: "Umar Faruk", email: "umar.faruk@gmail.com", phone: "087890123456" },
+  { id: "USR-008", name: "Aisyah Putri", email: "aisyah.p@gmail.com", phone: "088901234567" },
+  { id: "USR-009", name: "Ibrahim Malik", email: "ibrahim.m@gmail.com", phone: "089012345678" },
+  { id: "USR-010", name: "Zainab Husna", email: "zainab.h@gmail.com", phone: "081123456789" },
+];
 
 interface AdminAccount {
   id: string;
@@ -104,6 +138,8 @@ const RegionalAkun = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<AdminAccount | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -114,12 +150,14 @@ const RegionalAkun = () => {
 
   const handleCreate = () => {
     setEditingAccount(null);
+    setSelectedUser(null);
     setFormData({ name: "", email: "", phone: "", regional: "", password: "" });
     setIsDialogOpen(true);
   };
 
   const handleEdit = (account: AdminAccount) => {
     setEditingAccount(account);
+    setSelectedUser(null);
     setFormData({
       name: account.name,
       email: account.email,
@@ -128,6 +166,17 @@ const RegionalAkun = () => {
       password: "",
     });
     setIsDialogOpen(true);
+  };
+
+  const handleSelectUser = (user: User) => {
+    setSelectedUser(user);
+    setFormData({
+      ...formData,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+    });
+    setUserSearchOpen(false);
   };
 
   const handleSubmit = () => {
@@ -344,6 +393,58 @@ const RegionalAkun = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {!editingAccount && (
+              <div className="space-y-2">
+                <Label>Cari User *</Label>
+                <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={userSearchOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedUser ? (
+                        <span>{selectedUser.name} - {selectedUser.email}</span>
+                      ) : (
+                        <span className="text-muted-foreground">Cari nama atau email user...</span>
+                      )}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0 bg-white" align="start">
+                    <Command>
+                      <CommandInput placeholder="Ketik nama atau email..." />
+                      <CommandList>
+                        <CommandEmpty>User tidak ditemukan.</CommandEmpty>
+                        <CommandGroup>
+                          {mockUsers.map((user) => (
+                            <CommandItem
+                              key={user.id}
+                              value={`${user.name} ${user.email}`}
+                              onSelect={() => handleSelectUser(user)}
+                              className="cursor-pointer"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedUser?.id === user.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{user.name}</span>
+                                <span className="text-xs text-muted-foreground">{user.email} • {user.phone}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="name">Nama Lengkap *</Label>
               <Input
@@ -351,6 +452,8 @@ const RegionalAkun = () => {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Masukkan nama lengkap"
+                readOnly={!editingAccount && !!selectedUser}
+                className={!editingAccount && selectedUser ? "bg-slate-50" : ""}
               />
             </div>
 
@@ -362,6 +465,8 @@ const RegionalAkun = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="admin@mpj.id"
+                readOnly={!editingAccount && !!selectedUser}
+                className={!editingAccount && selectedUser ? "bg-slate-50" : ""}
               />
             </div>
 
@@ -372,6 +477,8 @@ const RegionalAkun = () => {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="08xxxxxxxxxx"
+                readOnly={!editingAccount && !!selectedUser}
+                className={!editingAccount && selectedUser ? "bg-slate-50" : ""}
               />
             </div>
 
