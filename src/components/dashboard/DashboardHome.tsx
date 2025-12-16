@@ -34,7 +34,8 @@ const recentActivity = [
 
 const DashboardHome = ({ onNavigate }: Props) => {
   const handleRegionClick = (regionId: string) => {
-    // Navigate to regional detail
+    // Navigate to regional management with the specific region ID
+    // In production, this would navigate to `/admin/regional/${regionId}`
     console.log("Navigate to region:", regionId);
     onNavigate?.("regional-mapping");
   };
