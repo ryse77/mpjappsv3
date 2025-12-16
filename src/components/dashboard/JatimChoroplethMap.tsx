@@ -1,190 +1,302 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Building2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface RegionData {
+// Regional data type
+interface RegionalData {
   id: string;
   name: string;
+  displayName: string;
   memberCount: number;
-  path: string;
+  pesantrenCount: number;
+  status: "active" | "inactive";
 }
 
-// East Java Regencies with simplified SVG paths (choropleth map)
-const regionsData: RegionData[] = [
-  // High Density (Deep Green) - 100+ members
-  { id: "malang", name: "Kota Malang", memberCount: 2450, path: "M220 185 L240 180 L255 190 L250 205 L230 210 L215 200 Z" },
-  { id: "malang-kab", name: "Kab. Malang", memberCount: 1850, path: "M200 165 L220 160 L260 170 L275 195 L265 220 L235 230 L195 215 L180 190 Z" },
-  { id: "surabaya", name: "Kota Surabaya", memberCount: 2100, path: "M340 95 L365 90 L380 100 L375 115 L355 120 L335 110 Z" },
-  { id: "sidoarjo", name: "Kab. Sidoarjo", memberCount: 980, path: "M335 120 L365 115 L380 135 L370 155 L345 160 L325 145 Z" },
-  { id: "jombang", name: "Kab. Jombang", memberCount: 720, path: "M265 125 L290 120 L310 135 L305 155 L280 160 L260 145 Z" },
+// Demo data as specified
+const regionalData: RegionalData[] = [
+  // High Density (Powerhouse) - Deep Forest Green
+  { id: "malang", name: "Kab. Malang", displayName: "MPJ Malang Raya", memberCount: 2500, pesantrenCount: 45, status: "active" },
+  { id: "kota-malang", name: "Kota Malang", displayName: "MPJ Malang Raya", memberCount: 1850, pesantrenCount: 32, status: "active" },
+  { id: "surabaya", name: "Kota Surabaya", displayName: "MPJ Surabaya Raya", memberCount: 2100, pesantrenCount: 38, status: "active" },
+  { id: "sidoarjo", name: "Kab. Sidoarjo", displayName: "MPJ Surabaya Raya", memberCount: 1200, pesantrenCount: 28, status: "active" },
+  { id: "gresik", name: "Kab. Gresik", displayName: "MPJ Surabaya Raya", memberCount: 980, pesantrenCount: 22, status: "active" },
   
-  // Medium Density (Emerald)
-  { id: "kediri-kab", name: "Kab. Kediri", memberCount: 580, path: "M185 140 L210 130 L235 145 L230 170 L200 180 L175 165 Z" },
-  { id: "kediri", name: "Kota Kediri", memberCount: 420, path: "M195 155 L215 150 L225 165 L215 175 L195 175 Z" },
-  { id: "blitar-kab", name: "Kab. Blitar", memberCount: 380, path: "M170 180 L195 175 L215 195 L205 220 L175 225 L155 205 Z" },
-  { id: "tulungagung", name: "Kab. Tulungagung", memberCount: 340, path: "M145 170 L170 165 L185 185 L175 210 L150 215 L130 195 Z" },
-  { id: "pasuruan-kab", name: "Kab. Pasuruan", memberCount: 520, path: "M310 155 L340 150 L365 170 L355 195 L325 200 L300 180 Z" },
-  { id: "gresik", name: "Kab. Gresik", memberCount: 460, path: "M310 95 L335 90 L350 105 L340 120 L315 125 L300 110 Z" },
-  { id: "lamongan", name: "Kab. Lamongan", memberCount: 390, path: "M265 90 L295 85 L315 100 L305 120 L275 125 L255 110 Z" },
-  { id: "mojokerto-kab", name: "Kab. Mojokerto", memberCount: 310, path: "M280 130 L305 125 L320 145 L310 165 L285 170 L270 150 Z" },
+  // Medium Density - Vibrant Emerald
+  { id: "jember", name: "Kab. Jember", displayName: "MPJ Tapal Kuda", memberCount: 680, pesantrenCount: 18, status: "active" },
+  { id: "kediri", name: "Kab. Kediri", displayName: "MPJ Kediri Raya", memberCount: 580, pesantrenCount: 15, status: "active" },
+  { id: "kota-kediri", name: "Kota Kediri", displayName: "MPJ Kediri Raya", memberCount: 420, pesantrenCount: 12, status: "active" },
+  { id: "jombang", name: "Kab. Jombang", displayName: "MPJ Jombang Raya", memberCount: 720, pesantrenCount: 20, status: "active" },
+  { id: "pasuruan", name: "Kab. Pasuruan", displayName: "MPJ Pasuruan Raya", memberCount: 520, pesantrenCount: 14, status: "active" },
+  { id: "probolinggo", name: "Kab. Probolinggo", displayName: "MPJ Tapal Kuda", memberCount: 380, pesantrenCount: 12, status: "active" },
+  { id: "banyuwangi", name: "Kab. Banyuwangi", displayName: "MPJ Tapal Kuda", memberCount: 450, pesantrenCount: 13, status: "active" },
   
-  // Lower Density (Soft Green)
-  { id: "probolinggo-kab", name: "Kab. Probolinggo", memberCount: 280, path: "M365 175 L395 165 L420 185 L410 210 L380 215 L355 195 Z" },
-  { id: "lumajang", name: "Kab. Lumajang", memberCount: 240, path: "M285 210 L315 200 L345 215 L335 245 L300 250 L275 235 Z" },
-  { id: "jember", name: "Kab. Jember", memberCount: 350, path: "M350 220 L385 210 L415 230 L405 265 L365 275 L340 250 Z" },
-  { id: "banyuwangi", name: "Kab. Banyuwangi", memberCount: 290, path: "M425 235 L465 220 L490 255 L475 300 L430 310 L405 275 Z" },
-  { id: "situbondo", name: "Kab. Situbondo", memberCount: 180, path: "M420 185 L455 175 L480 195 L470 220 L435 230 L410 210 Z" },
-  { id: "bondowoso", name: "Kab. Bondowoso", memberCount: 195, path: "M410 210 L440 200 L460 225 L450 255 L415 260 L395 235 Z" },
+  // Low Density - Soft Emerald
+  { id: "blitar", name: "Kab. Blitar", displayName: "MPJ Blitar Raya", memberCount: 280, pesantrenCount: 8, status: "active" },
+  { id: "tulungagung", name: "Kab. Tulungagung", displayName: "MPJ Blitar Raya", memberCount: 240, pesantrenCount: 7, status: "active" },
+  { id: "lamongan", name: "Kab. Lamongan", displayName: "MPJ Lamongan", memberCount: 320, pesantrenCount: 9, status: "active" },
+  { id: "tuban", name: "Kab. Tuban", displayName: "MPJ Tuban", memberCount: 280, pesantrenCount: 8, status: "active" },
+  { id: "bojonegoro", name: "Kab. Bojonegoro", displayName: "MPJ Bojonegoro", memberCount: 195, pesantrenCount: 6, status: "active" },
+  { id: "ngawi", name: "Kab. Ngawi", displayName: "MPJ Madiun Raya", memberCount: 145, pesantrenCount: 5, status: "active" },
+  { id: "madiun", name: "Kab. Madiun", displayName: "MPJ Madiun Raya", memberCount: 165, pesantrenCount: 5, status: "active" },
+  { id: "nganjuk", name: "Kab. Nganjuk", displayName: "MPJ Madiun Raya", memberCount: 175, pesantrenCount: 6, status: "active" },
+  { id: "ponorogo", name: "Kab. Ponorogo", displayName: "MPJ Madiun Raya", memberCount: 155, pesantrenCount: 5, status: "active" },
+  { id: "mojokerto", name: "Kab. Mojokerto", displayName: "MPJ Mojokerto", memberCount: 210, pesantrenCount: 7, status: "active" },
+  { id: "lumajang", name: "Kab. Lumajang", displayName: "MPJ Tapal Kuda", memberCount: 185, pesantrenCount: 6, status: "active" },
+  { id: "situbondo", name: "Kab. Situbondo", displayName: "MPJ Tapal Kuda", memberCount: 125, pesantrenCount: 4, status: "active" },
+  { id: "bondowoso", name: "Kab. Bondowoso", displayName: "MPJ Tapal Kuda", memberCount: 135, pesantrenCount: 4, status: "active" },
   
-  // Very Low Density (Light Gray/Green)
-  { id: "ngawi", name: "Kab. Ngawi", memberCount: 120, path: "M165 95 L195 85 L220 100 L215 125 L185 135 L160 120 Z" },
-  { id: "magetan", name: "Kab. Magetan", memberCount: 95, path: "M140 110 L165 100 L185 120 L175 145 L150 150 L130 135 Z" },
-  { id: "ponorogo", name: "Kab. Ponorogo", memberCount: 135, path: "M125 140 L150 130 L175 150 L165 180 L135 190 L110 170 Z" },
-  { id: "trenggalek", name: "Kab. Trenggalek", memberCount: 85, path: "M115 185 L145 175 L165 200 L155 230 L120 240 L95 215 Z" },
-  { id: "pacitan", name: "Kab. Pacitan", memberCount: 65, path: "M75 210 L105 195 L130 215 L120 250 L85 260 L60 235 Z" },
-  { id: "madiun-kab", name: "Kab. Madiun", memberCount: 145, path: "M165 120 L195 110 L215 130 L205 155 L175 165 L155 145 Z" },
-  { id: "nganjuk", name: "Kab. Nganjuk", memberCount: 165, path: "M200 115 L230 105 L255 125 L245 150 L215 160 L190 140 Z" },
-  { id: "bojonegoro", name: "Kab. Bojonegoro", memberCount: 175, path: "M225 85 L260 75 L290 95 L280 120 L245 130 L215 110 Z" },
-  { id: "tuban", name: "Kab. Tuban", memberCount: 155, path: "M265 65 L300 55 L330 75 L320 100 L285 110 L255 90 Z" },
+  // Madura
+  { id: "bangkalan", name: "Kab. Bangkalan", displayName: "MPJ Madura Raya", memberCount: 220, pesantrenCount: 7, status: "active" },
+  { id: "sampang", name: "Kab. Sampang", displayName: "MPJ Madura Raya", memberCount: 145, pesantrenCount: 5, status: "active" },
+  { id: "pamekasan", name: "Kab. Pamekasan", displayName: "MPJ Madura Raya", memberCount: 165, pesantrenCount: 5, status: "active" },
+  { id: "sumenep", name: "Kab. Sumenep", displayName: "MPJ Madura Raya", memberCount: 130, pesantrenCount: 4, status: "active" },
   
-  // Madura Island
-  { id: "bangkalan", name: "Kab. Bangkalan", memberCount: 185, path: "M385 75 L415 65 L440 80 L435 100 L405 110 L380 95 Z" },
-  { id: "sampang", name: "Kab. Sampang", memberCount: 125, path: "M440 70 L475 60 L500 75 L495 95 L460 105 L435 90 Z" },
-  { id: "pamekasan", name: "Kab. Pamekasan", memberCount: 145, path: "M495 65 L530 55 L555 70 L550 90 L515 100 L490 85 Z" },
-  { id: "sumenep", name: "Kab. Sumenep", memberCount: 110, path: "M545 55 L585 45 L615 60 L610 85 L575 95 L540 80 Z" },
+  // Inactive/Low Coverage
+  { id: "pacitan", name: "Kab. Pacitan", displayName: "MPJ Pacitan", memberCount: 45, pesantrenCount: 2, status: "inactive" },
+  { id: "magetan", name: "Kab. Magetan", displayName: "MPJ Madiun Raya", memberCount: 65, pesantrenCount: 2, status: "inactive" },
+  { id: "trenggalek", name: "Kab. Trenggalek", displayName: "MPJ Blitar Raya", memberCount: 55, pesantrenCount: 2, status: "inactive" },
 ];
 
-// Color scale based on member count
-const getRegionColor = (memberCount: number): string => {
-  if (memberCount >= 1500) return "hsl(152 61% 15%)"; // Deep Forest Green
-  if (memberCount >= 800) return "hsl(152 50% 25%)"; // Dark Emerald
-  if (memberCount >= 400) return "hsl(152 45% 35%)"; // Emerald
-  if (memberCount >= 200) return "hsl(152 40% 50%)"; // Medium Green
-  if (memberCount >= 100) return "hsl(152 35% 65%)"; // Light Green
-  return "hsl(152 25% 85%)"; // Very Light (Inactive)
+// Simplified GeoJSON for East Java (Jawa Timur)
+const jatimGeoJson = {
+  type: "FeatureCollection",
+  features: [
+    // Main island regions
+    { type: "Feature", properties: { id: "pacitan", name: "Kab. Pacitan" }, geometry: { type: "Polygon", coordinates: [[[111.1, -8.2], [111.4, -8.15], [111.5, -8.25], [111.45, -8.35], [111.2, -8.4], [111.05, -8.3], [111.1, -8.2]]] }},
+    { type: "Feature", properties: { id: "ponorogo", name: "Kab. Ponorogo" }, geometry: { type: "Polygon", coordinates: [[[111.3, -7.85], [111.55, -7.8], [111.65, -7.95], [111.55, -8.1], [111.35, -8.15], [111.2, -8.0], [111.3, -7.85]]] }},
+    { type: "Feature", properties: { id: "trenggalek", name: "Kab. Trenggalek" }, geometry: { type: "Polygon", coordinates: [[[111.55, -8.1], [111.8, -8.05], [111.9, -8.2], [111.85, -8.35], [111.55, -8.35], [111.45, -8.2], [111.55, -8.1]]] }},
+    { type: "Feature", properties: { id: "tulungagung", name: "Kab. Tulungagung" }, geometry: { type: "Polygon", coordinates: [[[111.8, -8.0], [112.05, -7.95], [112.15, -8.1], [112.05, -8.25], [111.85, -8.3], [111.75, -8.15], [111.8, -8.0]]] }},
+    { type: "Feature", properties: { id: "blitar", name: "Kab. Blitar" }, geometry: { type: "Polygon", coordinates: [[[112.05, -7.9], [112.3, -7.85], [112.45, -8.0], [112.35, -8.2], [112.1, -8.25], [112.0, -8.1], [112.05, -7.9]]] }},
+    { type: "Feature", properties: { id: "kediri", name: "Kab. Kediri" }, geometry: { type: "Polygon", coordinates: [[[111.9, -7.65], [112.15, -7.6], [112.3, -7.75], [112.2, -7.95], [111.95, -8.0], [111.8, -7.85], [111.9, -7.65]]] }},
+    { type: "Feature", properties: { id: "kota-kediri", name: "Kota Kediri" }, geometry: { type: "Polygon", coordinates: [[[112.0, -7.78], [112.08, -7.76], [112.1, -7.85], [112.02, -7.87], [112.0, -7.78]]] }},
+    { type: "Feature", properties: { id: "malang", name: "Kab. Malang" }, geometry: { type: "Polygon", coordinates: [[[112.35, -7.8], [112.7, -7.75], [112.9, -7.95], [112.85, -8.3], [112.5, -8.35], [112.3, -8.15], [112.35, -7.8]]] }},
+    { type: "Feature", properties: { id: "kota-malang", name: "Kota Malang" }, geometry: { type: "Polygon", coordinates: [[[112.58, -7.93], [112.68, -7.91], [112.7, -8.0], [112.6, -8.02], [112.58, -7.93]]] }},
+    { type: "Feature", properties: { id: "lumajang", name: "Kab. Lumajang" }, geometry: { type: "Polygon", coordinates: [[[112.85, -7.95], [113.15, -7.9], [113.25, -8.1], [113.15, -8.25], [112.9, -8.3], [112.8, -8.1], [112.85, -7.95]]] }},
+    { type: "Feature", properties: { id: "jember", name: "Kab. Jember" }, geometry: { type: "Polygon", coordinates: [[[113.25, -8.05], [113.6, -8.0], [113.75, -8.2], [113.6, -8.4], [113.3, -8.35], [113.2, -8.2], [113.25, -8.05]]] }},
+    { type: "Feature", properties: { id: "banyuwangi", name: "Kab. Banyuwangi" }, geometry: { type: "Polygon", coordinates: [[[113.75, -8.0], [114.3, -7.75], [114.45, -8.2], [114.35, -8.6], [113.95, -8.55], [113.7, -8.3], [113.75, -8.0]]] }},
+    { type: "Feature", properties: { id: "bondowoso", name: "Kab. Bondowoso" }, geometry: { type: "Polygon", coordinates: [[[113.7, -7.75], [114.0, -7.7], [114.1, -7.9], [113.95, -8.05], [113.7, -8.0], [113.6, -7.85], [113.7, -7.75]]] }},
+    { type: "Feature", properties: { id: "situbondo", name: "Kab. Situbondo" }, geometry: { type: "Polygon", coordinates: [[[113.85, -7.6], [114.25, -7.55], [114.4, -7.7], [114.15, -7.85], [113.9, -7.8], [113.8, -7.7], [113.85, -7.6]]] }},
+    { type: "Feature", properties: { id: "probolinggo", name: "Kab. Probolinggo" }, geometry: { type: "Polygon", coordinates: [[[113.1, -7.7], [113.4, -7.65], [113.55, -7.85], [113.4, -8.0], [113.15, -7.95], [113.05, -7.8], [113.1, -7.7]]] }},
+    { type: "Feature", properties: { id: "pasuruan", name: "Kab. Pasuruan" }, geometry: { type: "Polygon", coordinates: [[[112.75, -7.55], [113.05, -7.5], [113.15, -7.7], [113.0, -7.9], [112.75, -7.85], [112.65, -7.7], [112.75, -7.55]]] }},
+    { type: "Feature", properties: { id: "sidoarjo", name: "Kab. Sidoarjo" }, geometry: { type: "Polygon", coordinates: [[[112.65, -7.35], [112.85, -7.32], [112.9, -7.5], [112.75, -7.55], [112.6, -7.45], [112.6, -7.35], [112.65, -7.35]]] }},
+    { type: "Feature", properties: { id: "mojokerto", name: "Kab. Mojokerto" }, geometry: { type: "Polygon", coordinates: [[[112.35, -7.4], [112.6, -7.35], [112.65, -7.55], [112.5, -7.65], [112.3, -7.6], [112.25, -7.5], [112.35, -7.4]]] }},
+    { type: "Feature", properties: { id: "jombang", name: "Kab. Jombang" }, geometry: { type: "Polygon", coordinates: [[[112.15, -7.45], [112.4, -7.4], [112.5, -7.6], [112.35, -7.75], [112.1, -7.7], [112.05, -7.55], [112.15, -7.45]]] }},
+    { type: "Feature", properties: { id: "nganjuk", name: "Kab. Nganjuk" }, geometry: { type: "Polygon", coordinates: [[[111.85, -7.45], [112.1, -7.4], [112.2, -7.6], [112.05, -7.75], [111.8, -7.7], [111.75, -7.55], [111.85, -7.45]]] }},
+    { type: "Feature", properties: { id: "madiun", name: "Kab. Madiun" }, geometry: { type: "Polygon", coordinates: [[[111.45, -7.5], [111.7, -7.45], [111.8, -7.65], [111.65, -7.8], [111.4, -7.75], [111.35, -7.6], [111.45, -7.5]]] }},
+    { type: "Feature", properties: { id: "magetan", name: "Kab. Magetan" }, geometry: { type: "Polygon", coordinates: [[[111.3, -7.6], [111.5, -7.55], [111.55, -7.7], [111.45, -7.85], [111.25, -7.8], [111.2, -7.7], [111.3, -7.6]]] }},
+    { type: "Feature", properties: { id: "ngawi", name: "Kab. Ngawi" }, geometry: { type: "Polygon", coordinates: [[[111.3, -7.35], [111.6, -7.3], [111.7, -7.45], [111.55, -7.6], [111.3, -7.55], [111.2, -7.45], [111.3, -7.35]]] }},
+    { type: "Feature", properties: { id: "bojonegoro", name: "Kab. Bojonegoro" }, geometry: { type: "Polygon", coordinates: [[[111.65, -7.1], [112.0, -7.05], [112.1, -7.25], [111.95, -7.4], [111.65, -7.35], [111.55, -7.2], [111.65, -7.1]]] }},
+    { type: "Feature", properties: { id: "tuban", name: "Kab. Tuban" }, geometry: { type: "Polygon", coordinates: [[[111.9, -6.85], [112.25, -6.8], [112.35, -7.0], [112.2, -7.15], [111.95, -7.1], [111.85, -6.95], [111.9, -6.85]]] }},
+    { type: "Feature", properties: { id: "lamongan", name: "Kab. Lamongan" }, geometry: { type: "Polygon", coordinates: [[[112.2, -6.95], [112.5, -6.9], [112.6, -7.1], [112.45, -7.3], [112.2, -7.25], [112.1, -7.1], [112.2, -6.95]]] }},
+    { type: "Feature", properties: { id: "gresik", name: "Kab. Gresik" }, geometry: { type: "Polygon", coordinates: [[[112.5, -6.95], [112.75, -6.9], [112.8, -7.15], [112.65, -7.3], [112.45, -7.25], [112.4, -7.1], [112.5, -6.95]]] }},
+    { type: "Feature", properties: { id: "surabaya", name: "Kota Surabaya" }, geometry: { type: "Polygon", coordinates: [[[112.68, -7.2], [112.82, -7.18], [112.85, -7.35], [112.72, -7.37], [112.65, -7.3], [112.68, -7.2]]] }},
+    // Madura
+    { type: "Feature", properties: { id: "bangkalan", name: "Kab. Bangkalan" }, geometry: { type: "Polygon", coordinates: [[[112.7, -6.95], [113.05, -6.9], [113.15, -7.1], [112.95, -7.15], [112.7, -7.1], [112.65, -7.0], [112.7, -6.95]]] }},
+    { type: "Feature", properties: { id: "sampang", name: "Kab. Sampang" }, geometry: { type: "Polygon", coordinates: [[[113.1, -6.9], [113.4, -6.85], [113.5, -7.05], [113.35, -7.15], [113.1, -7.1], [113.05, -6.95], [113.1, -6.9]]] }},
+    { type: "Feature", properties: { id: "pamekasan", name: "Kab. Pamekasan" }, geometry: { type: "Polygon", coordinates: [[[113.4, -6.85], [113.65, -6.82], [113.75, -7.0], [113.6, -7.12], [113.4, -7.08], [113.35, -6.92], [113.4, -6.85]]] }},
+    { type: "Feature", properties: { id: "sumenep", name: "Kab. Sumenep" }, geometry: { type: "Polygon", coordinates: [[[113.7, -6.82], [114.05, -6.75], [114.15, -6.95], [113.95, -7.1], [113.7, -7.05], [113.65, -6.9], [113.7, -6.82]]] }},
+  ]
+};
+
+// Color scale function based on member count
+const getRegionColor = (memberCount: number, status: string): string => {
+  if (status === "inactive" || memberCount < 100) return "#ECFDF5"; // Very light (inactive)
+  if (memberCount >= 1500) return "#064E3B"; // Deep Forest Green (Powerhouse)
+  if (memberCount >= 800) return "#047857"; // Rich Emerald
+  if (memberCount >= 400) return "#10B981"; // Vibrant Emerald (Medium)
+  if (memberCount >= 200) return "#34D399"; // Light Emerald
+  return "#6EE7B7"; // Soft Emerald (Low)
 };
 
 interface Props {
-  onRegionClick?: (regionId: string) => void;
+  onRegionClick?: (regionalId: string) => void;
 }
 
 const JatimChoroplethMap = ({ onRegionClick }: Props) => {
-  const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(null);
+  const [hoveredRegion, setHoveredRegion] = useState<RegionalData | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  const handleMouseMove = (e: React.MouseEvent<SVGPathElement>, region: RegionData) => {
-    const svgRect = e.currentTarget.closest('svg')?.getBoundingClientRect();
-    if (svgRect) {
+  // Create a lookup map for regional data
+  const dataMap = useMemo(() => {
+    const map: Record<string, RegionalData> = {};
+    regionalData.forEach(r => {
+      map[r.id] = r;
+    });
+    return map;
+  }, []);
+
+  // Calculate totals
+  const totals = useMemo(() => ({
+    members: regionalData.reduce((acc, r) => acc + r.memberCount, 0),
+    pesantren: regionalData.reduce((acc, r) => acc + r.pesantrenCount, 0),
+    activeRegions: regionalData.filter(r => r.status === "active").length,
+  }), []);
+
+  const handleMouseMove = (event: React.MouseEvent, geo: any) => {
+    const regionId = geo.properties.id;
+    const data = dataMap[regionId];
+    if (data) {
+      setHoveredRegion(data);
       setTooltipPos({
-        x: e.clientX - svgRect.left,
-        y: e.clientY - svgRect.top - 60,
+        x: event.clientX,
+        y: event.clientY,
       });
     }
-    setHoveredRegion(region);
   };
 
-  const handleClick = (regionId: string) => {
-    if (onRegionClick) {
+  const handleClick = (geo: any) => {
+    const regionId = geo.properties.id;
+    const data = dataMap[regionId];
+    if (data && onRegionClick) {
       onRegionClick(regionId);
     }
   };
 
-  // Calculate totals
-  const totalMembers = regionsData.reduce((acc, r) => acc + r.memberCount, 0);
-  const activeRegions = regionsData.filter(r => r.memberCount >= 100).length;
-
   return (
-    <Card className="bg-white border-0 shadow-sm overflow-hidden">
+    <Card className="bg-white border-0 shadow-sm overflow-hidden relative">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg text-slate-800 font-semibold">
-          Peta Persebaran Anggota Jawa Timur
-        </CardTitle>
-        <p className="text-sm text-slate-500">
-          {totalMembers.toLocaleString()} anggota di {activeRegions} wilayah aktif
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg text-slate-800 font-semibold flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-emerald-600" />
+              Peta Strategis Jawa Timur
+            </CardTitle>
+            <p className="text-sm text-slate-500 mt-1">
+              {totals.members.toLocaleString()} anggota • {totals.pesantren} pesantren • {totals.activeRegions} wilayah aktif
+            </p>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="relative">
-          <svg 
-            viewBox="50 40 600 290" 
-            className="w-full h-auto"
-            style={{ maxHeight: '400px' }}
+      <CardContent className="p-4 pt-0">
+        <div className="relative bg-gradient-to-b from-slate-50 to-slate-100/50 rounded-lg overflow-hidden">
+          <ComposableMap
+            projection="geoMercator"
+            projectionConfig={{
+              scale: 8500,
+              center: [112.75, -7.55],
+            }}
+            style={{ width: "100%", height: "auto" }}
           >
-            {/* Background */}
-            <rect x="50" y="40" width="600" height="290" fill="hsl(152 20% 97%)" rx="8" />
-            
-            {/* Water/Sea background */}
-            <path
-              d="M50 40 L650 40 L650 330 L50 330 Z"
-              fill="hsl(200 30% 95%)"
-              opacity="0.5"
-            />
-            
-            {/* Regions */}
-            {regionsData.map((region) => {
-              const isHovered = hoveredRegion?.id === region.id;
-              const fillColor = getRegionColor(region.memberCount);
-              
-              return (
-                <path
-                  key={region.id}
-                  d={region.path}
-                  fill={fillColor}
-                  stroke={isHovered ? "hsl(45 72% 49%)" : "hsl(0 0% 100%)"}
-                  strokeWidth={isHovered ? 3 : 1}
-                  className={cn(
-                    "cursor-pointer transition-all duration-200",
-                    isHovered && "drop-shadow-lg"
-                  )}
-                  style={{
-                    transform: isHovered ? "scale(1.02)" : "scale(1)",
-                    transformOrigin: "center",
-                    filter: isHovered ? "brightness(1.1)" : "none",
-                  }}
-                  onMouseMove={(e) => handleMouseMove(e, region)}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  onClick={() => handleClick(region.id)}
-                />
-              );
-            })}
-            
-            {/* Legend */}
-            <g transform="translate(480, 260)">
-              <rect x="0" y="0" width="160" height="60" rx="6" fill="white" fillOpacity="0.95" />
-              <text x="10" y="18" className="text-xs font-medium" fill="#64748b">Kepadatan Anggota</text>
-              
-              {/* Color scale */}
-              <rect x="10" y="26" width="20" height="10" fill="hsl(152 25% 85%)" rx="2" />
-              <text x="35" y="34" className="text-xs" fill="#94a3b8">{"<100"}</text>
-              
-              <rect x="70" y="26" width="20" height="10" fill="hsl(152 45% 35%)" rx="2" />
-              <text x="95" y="34" className="text-xs" fill="#94a3b8">400+</text>
-              
-              <rect x="10" y="42" width="20" height="10" fill="hsl(152 61% 15%)" rx="2" />
-              <text x="35" y="50" className="text-xs" fill="#94a3b8">1500+</text>
-            </g>
-          </svg>
+            <ZoomableGroup center={[112.75, -7.55]} zoom={1} minZoom={0.8} maxZoom={3}>
+              <Geographies geography={jatimGeoJson}>
+                {({ geographies }) =>
+                  geographies.map((geo) => {
+                    const regionId = geo.properties.id;
+                    const data = dataMap[regionId];
+                    const isHovered = hoveredRegion?.id === regionId;
+                    const fillColor = data 
+                      ? getRegionColor(data.memberCount, data.status)
+                      : "#ECFDF5";
 
-          {/* Floating Tooltip */}
-          {hoveredRegion && (
-            <div
-              className="absolute pointer-events-none z-10 bg-white rounded-lg shadow-lg border border-slate-200 p-3 min-w-[160px] transition-all duration-150"
-              style={{
-                left: `${tooltipPos.x}px`,
-                top: `${tooltipPos.y}px`,
-                transform: 'translateX(-50%)',
-              }}
-            >
-              <p className="font-semibold text-slate-800 text-sm">{hoveredRegion.name}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-2xl font-bold text-emerald-600">
-                  {hoveredRegion.memberCount.toLocaleString()}
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        onMouseMove={(e) => handleMouseMove(e, geo)}
+                        onMouseLeave={() => setHoveredRegion(null)}
+                        onClick={() => handleClick(geo)}
+                        style={{
+                          default: {
+                            fill: fillColor,
+                            stroke: "#D1FAE5",
+                            strokeWidth: 0.5,
+                            outline: "none",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease-out",
+                          },
+                          hover: {
+                            fill: fillColor,
+                            stroke: "#F59E0B",
+                            strokeWidth: 2,
+                            outline: "none",
+                            cursor: "pointer",
+                            filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.15))",
+                            transform: "scale(1.02)",
+                            transformOrigin: "center",
+                          },
+                          pressed: {
+                            fill: fillColor,
+                            stroke: "#D97706",
+                            strokeWidth: 2,
+                            outline: "none",
+                          },
+                        }}
+                      />
+                    );
+                  })
+                }
+              </Geographies>
+            </ZoomableGroup>
+          </ComposableMap>
+
+          {/* Legend */}
+          <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-md p-3 space-y-2">
+            <p className="text-xs font-medium text-slate-600 mb-2">Kepadatan Anggota</p>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#ECFDF5" }} />
+              <span className="text-xs text-slate-500">Inactive</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#6EE7B7" }} />
+              <span className="text-xs text-slate-500">Low</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#10B981" }} />
+              <span className="text-xs text-slate-500">Medium</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#064E3B" }} />
+              <span className="text-xs text-slate-500">High</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Smart Tooltip - Fixed Position */}
+        {hoveredRegion && (
+          <div
+            className="fixed z-50 pointer-events-none animate-fade-in"
+            style={{
+              left: `${tooltipPos.x + 15}px`,
+              top: `${tooltipPos.y - 10}px`,
+            }}
+          >
+            <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-4 min-w-[220px]">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-bold text-slate-800">{hoveredRegion.displayName}</h3>
+                <span className={cn(
+                  "px-2 py-0.5 rounded-full text-xs font-medium",
+                  hoveredRegion.status === "active" 
+                    ? "bg-emerald-100 text-emerald-700" 
+                    : "bg-slate-100 text-slate-500"
+                )}>
+                  {hoveredRegion.status === "active" ? "Active" : "Inactive"}
                 </span>
-                <span className="text-xs text-slate-500">anggota</span>
+              </div>
+              <p className="text-xs text-slate-500 mb-3">{hoveredRegion.name}</p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm font-semibold text-slate-700">
+                    {hoveredRegion.memberCount.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-slate-400">Members</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-semibold text-slate-700">
+                    {hoveredRegion.pesantrenCount}
+                  </span>
+                  <span className="text-xs text-slate-400">Pesantren</span>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t border-slate-100">
+                <p className="text-xs text-emerald-600 font-medium">Klik untuk lihat detail →</p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
