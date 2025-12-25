@@ -1,161 +1,121 @@
 import { useState } from "react";
-import { Home, Award, Users, UserCog, LogOut, Menu, X, Bell } from "lucide-react";
+import { Home, Calendar, Award, User, Bell, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import CrewDashboardHome from "@/components/crew-dashboard/CrewDashboardHome";
-import KegiatanSaya from "@/components/crew-dashboard/KegiatanSaya";
-import TimSaya from "@/components/crew-dashboard/TimSaya";
-import ProfilPribadi from "@/components/crew-dashboard/ProfilPribadi";
+import CrewBerandaPage from "@/components/crew-dashboard/CrewBerandaPage";
+import CrewEventPage from "@/components/crew-dashboard/CrewEventPage";
+import CrewSertifikatPage from "@/components/crew-dashboard/CrewSertifikatPage";
+import CrewEIDCardPage from "@/components/crew-dashboard/CrewEIDCardPage";
+import CrewProfilPage from "@/components/crew-dashboard/CrewProfilPage";
 
-const menuItems = [
-  { id: "beranda", label: "Beranda", icon: Home },
-  { id: "kegiatan", label: "Kegiatan Saya", icon: Award },
-  { id: "tim", label: "Tim Saya", icon: Users },
-  { id: "profil", label: "Profil Pribadi", icon: UserCog },
+type ViewType = "beranda" | "event" | "sertifikat" | "eid" | "profil";
+
+const navItems = [
+  { id: "beranda" as ViewType, label: "Beranda", icon: Home },
+  { id: "event" as ViewType, label: "Event", icon: Calendar },
+  { id: "sertifikat" as ViewType, label: "Sertifikat", icon: Award },
+  { id: "profil" as ViewType, label: "Profil", icon: User },
 ];
 
 const CrewDashboard = () => {
-  const [activeView, setActiveView] = useState("beranda");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [institutionPaid, setInstitutionPaid] = useState(false);
+  const [activeView, setActiveView] = useState<ViewType>("beranda");
+  const [institutionPaid, setInstitutionPaid] = useState(true);
 
   const renderContent = () => {
     switch (activeView) {
       case "beranda":
-        return <CrewDashboardHome onNavigate={setActiveView} institutionPaid={institutionPaid} />;
-      case "kegiatan":
-        return <KegiatanSaya />;
-      case "tim":
-        return <TimSaya />;
+        return <CrewBerandaPage onNavigate={setActiveView} />;
+      case "event":
+        return <CrewEventPage />;
+      case "sertifikat":
+        return <CrewSertifikatPage />;
+      case "eid":
+        return <CrewEIDCardPage isGold={institutionPaid} onBack={() => setActiveView("profil")} />;
       case "profil":
-        return <ProfilPribadi />;
+        return <CrewProfilPage onNavigate={setActiveView} />;
       default:
-        return <CrewDashboardHome onNavigate={setActiveView} institutionPaid={institutionPaid} />;
+        return <CrewBerandaPage onNavigate={setActiveView} />;
     }
   };
 
+  const getPageTitle = () => {
+    switch (activeView) {
+      case "beranda": return null;
+      case "event": return "Event";
+      case "sertifikat": return "Sertifikat";
+      case "eid": return "E-ID Card";
+      case "profil": return "Profil";
+      default: return null;
+    }
+  };
+
+  const showHeader = activeView !== "beranda" && activeView !== "eid";
+  const showBackButton = activeView === "eid";
+
   return (
-    <div className="min-h-screen flex w-full bg-slate-100">
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+    <div className="min-h-screen flex flex-col bg-background pb-20">
+      {/* Header */}
+      {showHeader && (
+        <header className="sticky top-0 z-30 bg-card shadow-sm px-4 py-4 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-foreground">{getPageTitle()}</h1>
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-5 w-5" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-destructive rounded-full" />
+          </Button>
+        </header>
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#166534] flex flex-col transition-transform duration-300",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        )}
-      >
-        {/* Logo */}
-        <div className="p-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl">🕌</span>
-            </div>
-            <span className="text-white font-bold text-xl">MPJ Apps</span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden text-white hover:bg-white/10"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="h-5 w-5" />
+      {/* Back Header for E-ID Card */}
+      {showBackButton && (
+        <header className="sticky top-0 z-30 bg-card shadow-sm px-4 py-4 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => setActiveView("profil")}>
+            <ChevronLeft className="h-5 w-5" />
           </Button>
-        </div>
-
-        {/* Menu Items */}
-        <nav className="flex-1 px-4 space-y-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveView(item.id);
-                setSidebarOpen(false);
-              }}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white transition-all",
-                activeView === item.id
-                  ? "bg-[#064e3b] border-l-4 border-amber-400"
-                  : "hover:bg-white/10"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="font-medium">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        {/* Logout */}
-        <div className="p-4 border-t border-white/20">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/10 transition-all">
-            <LogOut className="h-5 w-5" />
-            <span className="font-medium">Logout</span>
-          </button>
-        </div>
-      </aside>
+          <h1 className="text-xl font-bold text-foreground">{getPageTitle()}</h1>
+        </header>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Top Bar */}
-        <header className="bg-white shadow-sm px-4 lg:px-6 py-4 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="https://i.pravatar.cc/150?img=12" />
-                <AvatarFallback>AK</AvatarFallback>
-              </Avatar>
-              <div className="hidden sm:block">
-                <p className="font-semibold text-foreground">Crew Member</p>
-              </div>
-              <Badge className="bg-amber-500 hover:bg-amber-600 text-white">
-                <span className="mr-1">⚡</span> 50 XP
-              </Badge>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
-            </Button>
-            <Avatar className="h-9 w-9">
-              <AvatarImage src="https://i.pravatar.cc/150?img=12" />
-              <AvatarFallback>AK</AvatarFallback>
-            </Avatar>
-            <Button variant="ghost" size="icon">
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
-        </header>
+      <main className="flex-1 overflow-auto">
+        {renderContent()}
+      </main>
 
-        {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          {renderContent()}
-        </main>
-      </div>
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-40">
+        <div className="flex items-center justify-around py-2">
+          {navItems.map((item) => {
+            const isActive = activeView === item.id || (activeView === "eid" && item.id === "profil");
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id)}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all min-w-[64px]",
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <item.icon className={cn("h-6 w-6", isActive && "stroke-[2.5px]")} />
+                <span className={cn("text-xs", isActive && "font-semibold")}>{item.label}</span>
+                {isActive && (
+                  <div className="absolute bottom-0 w-12 h-1 bg-primary rounded-t-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
-      {/* Status Toggle for Testing */}
-      <div className="fixed bottom-4 right-4 z-50">
+      {/* Testing Toggle */}
+      <div className="fixed bottom-24 right-4 z-50">
         <Button
           size="sm"
           variant={institutionPaid ? "default" : "secondary"}
           onClick={() => setInstitutionPaid(!institutionPaid)}
-          className="shadow-lg"
+          className="shadow-lg text-xs"
         >
           {institutionPaid ? "🏅 Gold" : "🔒 Basic"}
         </Button>
