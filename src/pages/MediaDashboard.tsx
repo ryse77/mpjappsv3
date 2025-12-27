@@ -2,17 +2,18 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
-  Building2, 
+  Building, 
   Users, 
   CreditCard, 
-  FolderOpen, 
+  Layers, 
   Settings,
   LogOut, 
   Bell,
   Menu,
   X,
   Zap,
-  AlertTriangle
+  AlertTriangle,
+  IdCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -29,22 +30,21 @@ import Pengaturan from "@/components/media-dashboard/Pengaturan";
 type ViewType = "beranda" | "identitas" | "kru" | "administrasi" | "hub" | "pengaturan";
 
 const menuItems = [
-  { id: "beranda" as ViewType, label: "Beranda", icon: LayoutDashboard },
-  { id: "identitas" as ViewType, label: "Identitas Pesantren", icon: Building2 },
-  { id: "kru" as ViewType, label: "Manajemen Crew", icon: Users },
-  { id: "administrasi" as ViewType, label: "Administrasi", icon: CreditCard },
-  { id: "hub" as ViewType, label: "MPJ-Hub", icon: FolderOpen },
-  { id: "pengaturan" as ViewType, label: "Pengaturan", icon: Settings },
+  { id: "beranda" as ViewType, label: "DASHBOARD BERANDA", icon: LayoutDashboard },
+  { id: "identitas" as ViewType, label: "IDENTITAS PESANTREN", icon: Building },
+  { id: "kru" as ViewType, label: "MANAJEMEN CREW (TIM MEDIA)", icon: Users },
+  { id: "administrasi" as ViewType, label: "ADMINISTRASI", icon: CreditCard },
+  { id: "hub" as ViewType, label: "MPJ-HUB", icon: Layers },
+  { id: "pengaturan" as ViewType, label: "PENGATURAN", icon: Settings },
 ];
 
 const MediaDashboard = () => {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("beranda");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { toast } = useToast();
-  // Get payment and level from AuthContext profile
+  
   const paymentStatus = profile?.status_payment ?? 'unpaid';
   const profileLevel = profile?.profile_level ?? 'basic';
 
@@ -72,7 +72,7 @@ const MediaDashboard = () => {
           <IdentitasPesantren 
             paymentStatus={paymentStatus}
             profileLevel={profileLevel}
-            onProfileLevelChange={() => {}} // Read-only from AuthContext
+            onProfileLevelChange={() => {}}
           />
         );
       case "kru":
@@ -81,7 +81,7 @@ const MediaDashboard = () => {
         return (
           <Administrasi 
             paymentStatus={paymentStatus}
-            onPaymentStatusChange={() => {}} // Read-only from AuthContext
+            onPaymentStatusChange={() => {}}
           />
         );
       case "hub":
@@ -107,49 +107,38 @@ const MediaDashboard = () => {
   const getLevelBadge = () => {
     switch (profileLevel) {
       case "silver": return { label: "Silver", class: "bg-slate-400" };
-      case "gold": return { label: "Gold", class: "bg-accent" };
+      case "gold": return { label: "Gold", class: "bg-[#f59e0b]" };
       case "platinum": return { label: "Platinum", class: "bg-purple-500" };
-      default: return { label: "Basic", class: "bg-slate-300" };
+      default: return { label: "Basic", class: "bg-slate-500" };
     }
   };
 
   const levelBadge = getLevelBadge();
 
   return (
-    <div className="min-h-screen bg-dashboard-bg flex">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile Overlay */}
       {mobileSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
           onClick={() => setMobileSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar - Deep Emerald Green using design system */}
+      {/* Sidebar - Deep Emerald Green */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-sidebar-background text-sidebar-foreground transition-all duration-300",
-          sidebarOpen ? "w-64" : "w-20",
+          "fixed lg:static inset-y-0 left-0 z-50 flex flex-col w-72 bg-[#166534] text-white transition-transform duration-300",
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-          {sidebarOpen && (
-            <span className="text-xl font-bold text-sidebar-foreground">MPJ Media</span>
-          )}
+        {/* Header */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-white/20">
+          <span className="text-xl font-bold tracking-wide">MPJ MEDIA</span>
           <Button
             variant="ghost"
             size="icon"
-            className="text-sidebar-foreground hover:bg-sidebar-accent hidden lg:flex"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-sidebar-foreground hover:bg-sidebar-accent lg:hidden"
+            className="text-white hover:bg-white/10 lg:hidden"
             onClick={() => setMobileSidebarOpen(false)}
           >
             <X className="h-5 w-5" />
@@ -157,34 +146,32 @@ const MediaDashboard = () => {
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 py-4 px-3 space-y-1">
+        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleMenuClick(item.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200",
+                "w-full flex items-center gap-3 px-3 py-3.5 rounded-lg transition-all duration-200 text-left",
                 activeView === item.id
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground border-l-4 border-accent"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent"
+                  ? "bg-white/20 text-white font-semibold border-l-4 border-[#f59e0b]"
+                  : "text-white/80 hover:bg-white/10 hover:text-white"
               )}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
-              {sidebarOpen && (
-                <span className="flex-1 text-left">{item.label}</span>
-              )}
+              <span className="text-sm">{item.label}</span>
             </button>
           ))}
         </nav>
 
         {/* Logout */}
-        <div className="p-3 border-t border-sidebar-border">
+        <div className="p-3 border-t border-white/20">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-red-200 hover:bg-red-500/30 hover:text-white transition-colors"
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
-            {sidebarOpen && <span>Logout</span>}
+            <span className="text-sm">LOGOUT</span>
           </button>
         </div>
       </aside>
@@ -193,15 +180,15 @@ const MediaDashboard = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Sticky Payment Alert */}
         {paymentStatus === "unpaid" && (
-          <Alert className="rounded-none border-x-0 border-t-0 bg-destructive/10 border-destructive/30">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            <AlertDescription className="flex items-center justify-between w-full">
-              <span className="text-destructive">
-                <strong>Masa Aktif Habis.</strong> Lunasi tagihan di menu Administrasi untuk membuka fitur.
+          <Alert className="rounded-none border-x-0 border-t-0 bg-red-50 border-red-200">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2">
+              <span className="text-red-700 text-sm">
+                <strong>Masa Aktif Habis.</strong> Lunasi tagihan di menu Administrasi.
               </span>
               <Button 
                 size="sm" 
-                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground ml-4"
+                className="bg-red-600 hover:bg-red-700 text-white"
                 onClick={() => handleMenuClick("administrasi")}
               >
                 Bayar Sekarang
@@ -210,45 +197,52 @@ const MediaDashboard = () => {
           </Alert>
         )}
 
-        {/* Top Bar */}
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+        {/* Top Bar - High Contrast */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-slate-700"
               onClick={() => setMobileSidebarOpen(true)}
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-6 w-6" />
             </Button>
             <div>
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-lg font-bold text-slate-900">
                 Dashboard Koordinator
               </h2>
               <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground">Pondok Pesantren Al-Hikmah</p>
-                <span className={cn("text-xs px-2 py-0.5 rounded-full text-white", levelBadge.class)}>
+                <p className="text-sm text-slate-600">Media Pesantren</p>
+                <span className={cn("text-xs px-2 py-0.5 rounded-full text-white font-medium", levelBadge.class)}>
                   {levelBadge.label}
                 </span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            {/* XP Badge - Golden Orange using design system */}
-            <div className="flex items-center gap-1 bg-gradient-to-r from-accent to-amber-500 text-accent-foreground px-3 py-1.5 rounded-full text-sm font-bold shadow-md">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* E-ID Badge */}
+            <div className="flex items-center gap-1.5 bg-[#166534] text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold">
+              <IdCard className="h-4 w-4" />
+              <span className="hidden sm:inline">E-ID</span>
+            </div>
+            {/* XP Badge - Golden Orange */}
+            <div className="flex items-center gap-1 bg-[#f59e0b] text-slate-900 px-3 py-1.5 rounded-full text-sm font-bold shadow-sm">
               <Zap className="h-4 w-4" />
               <span>150 XP</span>
             </div>
             <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5 text-muted-foreground" />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full" />
+              <Bell className="h-5 w-5 text-slate-600" />
+              <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
             </Button>
             {/* User Avatar */}
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                AF
+              <div className="h-10 w-10 rounded-full bg-[#166534] flex items-center justify-center text-white font-semibold text-sm">
+                MP
               </div>
-              <span className="text-sm font-medium text-foreground hidden md:block">Ahmad Fauzi</span>
+              <span className="text-sm font-medium text-slate-900 hidden md:block">
+                Koordinator
+              </span>
             </div>
           </div>
         </header>
