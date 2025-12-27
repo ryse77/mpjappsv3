@@ -7,7 +7,8 @@ import {
   LayoutDashboard,
   CheckCircle,
   History,
-  Settings,
+  Tag,
+  BarChart3,
   DollarSign
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -15,22 +16,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import FinanceOverview from "@/components/finance-dashboard/FinanceOverview";
-import ClearingHouse from "@/components/finance-dashboard/ClearingHouse";
-import FinanceReporting from "@/components/finance-dashboard/FinanceReporting";
+import FinanceBeranda from "@/components/finance-dashboard/FinanceBeranda";
+import FinanceVerifikasi from "@/components/finance-dashboard/FinanceVerifikasi";
+import FinanceRiwayat from "@/components/finance-dashboard/FinanceRiwayat";
+import FinanceHarga from "@/components/finance-dashboard/FinanceHarga";
+import FinanceLaporan from "@/components/finance-dashboard/FinanceLaporan";
 
-type ViewType = "verification" | "history" | "pricing";
+type ViewType = "beranda" | "verifikasi" | "riwayat" | "harga" | "laporan";
 
 const menuItems = [
-  { id: "verification" as ViewType, label: "Verifikasi", icon: CheckCircle, badge: 5 },
-  { id: "history" as ViewType, label: "Riwayat Transaksi", icon: History },
-  { id: "pricing" as ViewType, label: "Pengaturan Harga", icon: Settings },
+  { id: "beranda" as ViewType, label: "Dashboard Beranda", icon: LayoutDashboard },
+  { id: "verifikasi" as ViewType, label: "Verifikasi", icon: CheckCircle, badge: 5 },
+  { id: "riwayat" as ViewType, label: "Riwayat Transaksi", icon: History },
+  { id: "harga" as ViewType, label: "Pengaturan Harga", icon: Tag },
+  { id: "laporan" as ViewType, label: "Laporan", icon: BarChart3 },
 ];
 
 const FinanceDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [activeView, setActiveView] = useState<ViewType>("verification");
+  const [activeView, setActiveView] = useState<ViewType>("beranda");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { profile, signOut } = useAuth();
 
@@ -45,14 +50,18 @@ const FinanceDashboard = () => {
 
   const renderContent = () => {
     switch (activeView) {
-      case "verification":
-        return <ClearingHouse />;
-      case "history":
-        return <FinanceReporting />;
-      case "pricing":
-        return <FinanceOverview />;
+      case "beranda":
+        return <FinanceBeranda />;
+      case "verifikasi":
+        return <FinanceVerifikasi />;
+      case "riwayat":
+        return <FinanceRiwayat />;
+      case "harga":
+        return <FinanceHarga />;
+      case "laporan":
+        return <FinanceLaporan />;
       default:
-        return <ClearingHouse />;
+        return <FinanceBeranda />;
     }
   };
 
@@ -70,7 +79,7 @@ const FinanceDashboard = () => {
             <DollarSign className="w-6 h-6 text-amber-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-wide">MPJ Finance</h1>
+            <h1 className="text-xl font-bold text-white tracking-wide">MPJ FINANCE</h1>
             <p className="text-xs text-white/60">Gatekeeper Dashboard</p>
           </div>
         </div>
@@ -106,7 +115,7 @@ const FinanceDashboard = () => {
       {/* Role Badge */}
       <div className="px-4 py-3 mx-4 mb-2 bg-white/5 rounded-lg">
         <p className="text-xs text-white/50">Logged in as</p>
-        <p className="text-sm text-amber-400 font-medium">Finance Admin</p>
+        <p className="text-sm text-amber-400 font-medium">Finance Gatekeeper</p>
       </div>
 
       {/* Logout */}
@@ -123,15 +132,15 @@ const FinanceDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-dashboard-bg flex w-full">
-      {/* Desktop Sidebar - Solid Emerald Green with Gold Accents */}
-      <aside className="hidden md:flex flex-col w-[250px] bg-sidebar fixed h-screen">
+    <div className="min-h-screen bg-background flex w-full">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-[250px] bg-[#166534] fixed h-screen">
         <SidebarContent />
       </aside>
 
-      {/* Mobile Sidebar using Sheet */}
+      {/* Mobile Sidebar */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="w-[250px] p-0 bg-sidebar border-none">
+        <SheetContent side="left" className="w-[250px] p-0 bg-[#166534] border-none">
           <SidebarContent />
         </SheetContent>
       </Sheet>
@@ -148,8 +157,8 @@ const FinanceDashboard = () => {
               <Menu className="w-6 h-6" />
             </button>
             <div>
-              <h2 className="text-lg md:text-xl font-bold text-sidebar">Finance Gatekeeper</h2>
-              <p className="text-xs text-muted-foreground">Verifikasi Pembayaran MPJ</p>
+              <h2 className="text-lg md:text-xl font-bold text-[#166534]">MPJ FINANCE</h2>
+              <p className="text-xs text-muted-foreground">Gatekeeper - Aktivasi Akun</p>
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
@@ -160,17 +169,19 @@ const FinanceDashboard = () => {
             <div className="flex items-center gap-2 md:gap-3">
               <Avatar className="w-9 h-9 md:w-10 md:h-10 border-2 border-amber-500">
                 <AvatarImage src="/placeholder.svg" />
-                <AvatarFallback className="bg-sidebar text-sidebar-foreground text-sm">
-                  FA
+                <AvatarFallback className="bg-[#166534] text-white text-sm">
+                  FG
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden sm:block text-sm font-medium text-foreground">Finance Admin</span>
+              <span className="hidden sm:block text-sm font-medium text-foreground">
+                Finance Admin
+              </span>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main className="flex-1 p-4 md:p-6 overflow-auto pb-20">
           {renderContent()}
         </main>
       </div>
