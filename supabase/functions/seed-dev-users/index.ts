@@ -73,10 +73,11 @@ Deno.serve(async (req) => {
     }
 
     // Step 3: Define users to seed
-    // Note: Using existing roles from app_role enum: 'user', 'admin_regional', 'admin_pusat'
+    // Note: Using existing roles from app_role enum: 'user', 'admin_regional', 'admin_pusat', 'admin_finance'
     const usersToSeed = [
       { email: "pusat@mpj.com", role: "admin_pusat" as const, nama_pesantren: "Pusat MPJ", nama_pengasuh: "Admin Pusat" },
       { email: "regional@mpj.com", role: "admin_regional" as const, nama_pesantren: "Regional Jatim", nama_pengasuh: "Admin Regional" },
+      { email: "finance@mpj.com", role: "admin_finance" as const, nama_pesantren: "Finance MPJ", nama_pengasuh: "Admin Finance" },
       { email: "media@mpj.com", role: "user" as const, nama_pesantren: "Pesantren Al-Falah", nama_pengasuh: "KH. Ahmad Media", nama_media: "Media Al-Falah" },
       { email: "kru@mpj.com", role: "user" as const, nama_pesantren: "Pesantren Al-Falah", nama_pengasuh: "Santri 01", nama_media: "Kru Media" },
     ];

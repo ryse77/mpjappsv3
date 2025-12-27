@@ -99,18 +99,21 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            {/* ══════════════════════════════════════════════════════ */}
+            {/* ADMIN FINANCE ROUTES - role === 'admin_finance' ONLY   */}
+            {/* ══════════════════════════════════════════════════════ */}
             <Route 
-              path="/admin-pusat/finance" 
+              path="/finance" 
               element={
-                <ProtectedRoute allowedRoles={['admin_pusat']}>
+                <ProtectedRoute allowedRoles={['admin_finance']}>
                   <FinanceDashboard />
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/admin-pusat/finance/*" 
+              path="/finance/*" 
               element={
-                <ProtectedRoute allowedRoles={['admin_pusat']}>
+                <ProtectedRoute allowedRoles={['admin_finance']}>
                   <FinanceDashboard />
                 </ProtectedRoute>
               } 

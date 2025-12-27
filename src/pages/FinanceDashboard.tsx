@@ -1,58 +1,51 @@
 import { useState } from "react";
 import { 
-  Home, 
   LogOut, 
   Menu, 
   Bell,
   LayoutDashboard,
   CheckCircle,
-  Map,
-  FileText,
+  History,
+  Settings,
   DollarSign
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import FinanceOverview from "@/components/finance-dashboard/FinanceOverview";
 import ClearingHouse from "@/components/finance-dashboard/ClearingHouse";
-import RegionalMonitoring from "@/components/finance-dashboard/RegionalMonitoring";
 import FinanceReporting from "@/components/finance-dashboard/FinanceReporting";
 
-type ViewType = "overview" | "verification" | "monitoring" | "reports";
+type ViewType = "verification" | "history" | "pricing";
 
 const menuItems = [
-  { id: "overview" as ViewType, label: "Dashboard", icon: LayoutDashboard },
-  { id: "verification" as ViewType, label: "Clearing House", icon: CheckCircle, badge: 15 },
-  { id: "monitoring" as ViewType, label: "Monitoring Regional", icon: Map },
-  { id: "reports" as ViewType, label: "Reporting", icon: FileText },
+  { id: "verification" as ViewType, label: "Verifikasi", icon: CheckCircle, badge: 5 },
+  { id: "history" as ViewType, label: "Riwayat Transaksi", icon: History },
+  { id: "pricing" as ViewType, label: "Pengaturan Harga", icon: Settings },
 ];
 
 const FinanceDashboard = () => {
-  const [activeView, setActiveView] = useState<ViewType>("overview");
+  const [activeView, setActiveView] = useState<ViewType>("verification");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { profile } = useAuth();
 
-  // Mock role check - in production, this would come from auth context
-  const userRole = "finance_admin"; // finance_admin, super_admin, verification_team
-  const allowedRoles = ["finance_admin", "super_admin", "verification_team"];
-  
-  // Redirect unauthorized users (in production, use proper auth guard)
-  if (!allowedRoles.includes(userRole)) {
-    window.location.href = "/dashboard";
-    return null;
-  }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  };
 
   const renderContent = () => {
     switch (activeView) {
-      case "overview":
-        return <FinanceOverview />;
       case "verification":
         return <ClearingHouse />;
-      case "monitoring":
-        return <RegionalMonitoring />;
-      case "reports":
+      case "history":
         return <FinanceReporting />;
-      default:
+      case "pricing":
         return <FinanceOverview />;
+      default:
+        return <ClearingHouse />;
     }
   };
 
@@ -71,7 +64,7 @@ const FinanceDashboard = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white tracking-wide">MPJ Finance</h1>
-            <p className="text-xs text-white/60">Treasury Dashboard</p>
+            <p className="text-xs text-white/60">Gatekeeper Dashboard</p>
           </div>
         </div>
       </div>
@@ -112,7 +105,7 @@ const FinanceDashboard = () => {
       {/* Logout */}
       <div className="p-4 mt-auto">
         <button
-          onClick={() => window.location.href = "/"}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-all duration-200 min-h-[44px]"
         >
           <LogOut className="w-5 h-5" />
@@ -148,8 +141,8 @@ const FinanceDashboard = () => {
               <Menu className="w-6 h-6" />
             </button>
             <div>
-              <h2 className="text-lg md:text-xl font-bold text-sidebar">Finance & Treasury</h2>
-              <p className="text-xs text-muted-foreground">MPJ Apps Central Finance</p>
+              <h2 className="text-lg md:text-xl font-bold text-sidebar">Finance Gatekeeper</h2>
+              <p className="text-xs text-muted-foreground">Verifikasi Pembayaran MPJ</p>
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
