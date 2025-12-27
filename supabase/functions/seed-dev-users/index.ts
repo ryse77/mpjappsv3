@@ -75,11 +75,12 @@ Deno.serve(async (req) => {
     // Step 3: Define users to seed
     // Note: Using existing roles from app_role enum: 'user', 'admin_regional', 'admin_pusat', 'admin_finance'
     const usersToSeed = [
-      { email: "pusat@mpj.com", role: "admin_pusat" as const, nama_pesantren: "Pusat MPJ", nama_pengasuh: "Admin Pusat" },
-      { email: "regional@mpj.com", role: "admin_regional" as const, nama_pesantren: "Regional Jatim", nama_pengasuh: "Admin Regional" },
-      { email: "finance@mpj.com", role: "admin_finance" as const, nama_pesantren: "Finance MPJ", nama_pengasuh: "Admin Finance" },
-      { email: "media@mpj.com", role: "user" as const, nama_pesantren: "Pesantren Al-Falah", nama_pengasuh: "KH. Ahmad Media", nama_media: "Media Al-Falah" },
-      { email: "kru@mpj.com", role: "user" as const, nama_pesantren: "Pesantren Al-Falah", nama_pengasuh: "Santri 01", nama_media: "Kru Media" },
+      { email: "superadmin@mpj.com", role: "admin_pusat" as const, nama_pesantren: "MPJ Pusat", nama_pengasuh: "Super Admin MPJ" },
+      { email: "pusat@mpj.com", role: "admin_pusat" as const, nama_pesantren: "MPJ Pusat", nama_pengasuh: "Admin Pusat" },
+      { email: "finance@mpj.com", role: "admin_finance" as const, nama_pesantren: "MPJ Finance", nama_pengasuh: "Admin Finance" },
+      { email: "regional@mpj.com", role: "admin_regional" as const, nama_pesantren: "MPJ Regional Jatim", nama_pengasuh: "Admin Regional" },
+      { email: "media@mpj.com", role: "user" as const, nama_pesantren: "Pesantren Al-Hikmah", nama_pengasuh: "KH. Ahmad Fauzi", nama_media: "Media Al-Hikmah" },
+      { email: "kru@mpj.com", role: "user" as const, nama_pesantren: "Pesantren Al-Hikmah", nama_pengasuh: "Santri Ahmad", nama_media: "Kru Media" },
     ];
 
     // Step 4: Create users and update profiles
@@ -111,13 +112,24 @@ Deno.serve(async (req) => {
         }
 
         // Step 5: Force update profile (bypass triggers using raw SQL via RPC)
-        // First, update the user_roles table
-        const { error: roleError } = await supabaseAdmin
+        // First, check if user_role exists, then insert or update
+        const { data: existingRole } = await supabaseAdmin
           .from("user_roles")
-          .upsert({ user_id: userId, role: userData.role }, { onConflict: "user_id" });
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle();
 
-        if (roleError) {
-          console.error("Role update error:", roleError);
+        if (existingRole) {
+          const { error: roleError } = await supabaseAdmin
+            .from("user_roles")
+            .update({ role: userData.role })
+            .eq("user_id", userId);
+          if (roleError) console.error("Role update error:", roleError);
+        } else {
+          const { error: roleError } = await supabaseAdmin
+            .from("user_roles")
+            .insert({ user_id: userId, role: userData.role });
+          if (roleError) console.error("Role insert error:", roleError);
         }
 
         // Use raw SQL to bypass the immutability trigger
