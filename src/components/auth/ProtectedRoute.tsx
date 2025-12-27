@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -15,8 +16,8 @@ interface ProtectedRouteProps {
  * 
  * LAYER 1 - STATUS GATE (Global):
  * - NOT authenticated → /login
- * - status = 'pending' → /pending
- * - status = 'rejected' → /rejected
+ * - status = 'pending' → /verification-pending
+ * - status = 'rejected' → LOGOUT + Alert
  * 
  * LAYER 2 - ROLE GATE (Prefix-based):
  * - /admin-pusat/* → role === 'admin_pusat'
@@ -24,10 +25,40 @@ interface ProtectedRouteProps {
  * - /user/* → role === 'user'
  * 
  * All enforcement happens BEFORE render, not after.
+ * Session persistence: checks status on every auth state change.
  */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-  const { user, profile, isLoading } = useAuth();
+  const { user, profile, isLoading, signOut } = useAuth();
   const location = useLocation();
+  const { toast } = useToast();
+  const hasHandledRejection = useRef(false);
+
+  // Handle rejected status with logout
+  useEffect(() => {
+    if (
+      profile?.status_account === 'rejected' && 
+      !hasHandledRejection.current &&
+      location.pathname !== '/login'
+    ) {
+      hasHandledRejection.current = true;
+      
+      toast({
+        title: "Akun Ditolak",
+        description: "Akun Anda telah ditolak. Silakan hubungi Admin untuk informasi lebih lanjut.",
+        variant: "destructive",
+        duration: 6000,
+      });
+      
+      signOut();
+    }
+  }, [profile?.status_account, signOut, toast, location.pathname]);
+
+  // Reset rejection handler when user changes
+  useEffect(() => {
+    if (!user) {
+      hasHandledRejection.current = false;
+    }
+  }, [user]);
 
   // Show loading state while fetching auth data
   if (isLoading) {
@@ -55,22 +86,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     return <Navigate to="/login" replace />;
   }
 
-  // Status = pending → redirect to pending page
+  // Status = pending → redirect to verification-pending page
   if (profile.status_account === 'pending') {
-    // Allow access to pending page itself
-    if (location.pathname === '/pending') {
+    // Allow access to verification-pending page itself
+    if (location.pathname === '/verification-pending') {
       return <>{children}</>;
     }
-    return <Navigate to="/pending" replace />;
+    return <Navigate to="/verification-pending" replace />;
   }
 
-  // Status = rejected → redirect to rejected page
+  // Status = rejected → handled by useEffect (logout + alert)
+  // Return null while logout is processing
   if (profile.status_account === 'rejected') {
-    // Allow access to rejected page itself
-    if (location.pathname === '/rejected') {
-      return <>{children}</>;
-    }
-    return <Navigate to="/rejected" replace />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-destructive border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground">Memproses...</p>
+        </div>
+      </div>
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════

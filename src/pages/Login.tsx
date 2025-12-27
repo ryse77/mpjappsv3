@@ -3,29 +3,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, EyeOff, ArrowRight, Phone, Lock, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import logoMpj from "@/assets/logo-mpj.png";
 
 /**
  * LOGIN PAGE
  * 
  * Authenticates user via Supabase Auth.
- * After successful login, redirects based on role:
- * - admin_pusat → /admin-pusat
- * - admin_regional → /admin-regional
- * - user → /user
- * 
- * Pending/rejected status handling is done by ProtectedRoute.
+ * After successful login, redirects based on role.
+ * Status handling is done by ProtectedRoute.
  */
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
+    identifier: "", // Can be email or WhatsApp number
     password: "",
-    rememberMe: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -35,8 +31,6 @@ const Login = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && user && profile) {
-      // Status gates are handled by ProtectedRoute
-      // Here we just redirect to the appropriate dashboard
       redirectToDashboard(profile.role);
     }
   }, [user, profile, authLoading]);
@@ -56,13 +50,28 @@ const Login = () => {
     }
   };
 
+  // Convert WhatsApp number to email format if needed
+  const formatIdentifier = (identifier: string): string => {
+    // If it looks like a phone number (starts with 0 or 62), convert to email format
+    if (/^(0|62)\d+$/.test(identifier.replace(/\D/g, ''))) {
+      const phoneNumber = identifier.replace(/\D/g, '');
+      // Normalize: remove leading 62, keep leading 0
+      const normalizedPhone = phoneNumber.startsWith('62') 
+        ? '0' + phoneNumber.slice(2) 
+        : phoneNumber;
+      return `${normalizedPhone}@mpj.local`;
+    }
+    // Otherwise, assume it's an email
+    return identifier;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password) {
+    if (!formData.identifier || !formData.password) {
       toast({
         title: "Form tidak lengkap",
-        description: "Mohon masukkan email dan password",
+        description: "Mohon masukkan email/No WA dan password",
         variant: "destructive",
       });
       return;
@@ -71,17 +80,27 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      const email = formatIdentifier(formData.identifier);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        email,
         password: formData.password,
       });
 
       if (error) {
+        let errorMessage = "Terjadi kesalahan";
+        
+        if (error.message === "Invalid login credentials") {
+          errorMessage = "Email/No WA atau password salah";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Email belum dikonfirmasi";
+        } else {
+          errorMessage = error.message;
+        }
+        
         toast({
           title: "Login Gagal",
-          description: error.message === "Invalid login credentials" 
-            ? "Email atau password salah" 
-            : error.message,
+          description: errorMessage,
           variant: "destructive",
         });
         setIsLoading(false);
@@ -109,115 +128,141 @@ const Login = () => {
   // Show loading if auth is initializing
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
-          <p className="text-white">Memuat...</p>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground">Memuat...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary via-primary/90 to-primary">
-      {/* Header */}
-      <div className="flex-shrink-0 pt-10 pb-6 px-6 text-center">
-        <h1 className="text-2xl font-bold text-primary-foreground">Selamat Datang</h1>
-        <p className="text-sm text-primary-foreground/70 mt-1">Masuk ke akun MPJ Apps</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
+      {/* Logo */}
+      <div className="mb-6">
+        <img src={logoMpj} alt="MPJ Logo" className="h-16 w-auto" />
       </div>
 
-      {/* Form Card */}
-      <div className="flex-1 bg-card rounded-t-3xl px-6 pt-6 pb-8 mt-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm text-foreground">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="email@example.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="h-12 rounded-xl border-border/50 bg-muted/30"
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm text-foreground">Password</Label>
-            <div className="relative">
+      {/* Login Card */}
+      <Card className="w-full max-w-md shadow-lg border-border/50">
+        <CardHeader className="text-center space-y-1">
+          <CardTitle className="text-2xl font-bold">Selamat Datang</CardTitle>
+          <CardDescription>Masuk ke akun MPJ Apps Anda</CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email / No WA */}
+            <div className="space-y-2">
+              <Label htmlFor="identifier" className="flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                Email atau No. WhatsApp
+              </Label>
               <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Masukkan password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="h-12 rounded-xl border-border/50 pr-12 bg-muted/30"
-                autoComplete="current-password"
+                id="identifier"
+                type="text"
+                placeholder="contoh@email.com atau 08xxxxxxxxxx"
+                value={formData.identifier}
+                onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
+                className="h-12"
+                autoComplete="email"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+            </div>
+
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Masukkan password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="h-12 pr-12"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="flex justify-end">
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-primary hover:underline font-medium"
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
+                Lupa Password?
+              </Link>
+            </div>
+
+            {/* Submit Button */}
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full h-12"
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  Memproses...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  Masuk
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              )}
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <span className="px-3 bg-card text-sm text-muted-foreground">atau</span>
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="remember" 
-                checked={formData.rememberMe}
-                onCheckedChange={(checked) => setFormData({ ...formData, rememberMe: checked as boolean })}
-              />
-              <label htmlFor="remember" className="text-sm text-foreground">
-                Ingat saya
-              </label>
+          {/* Legacy Claim Link */}
+          <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center flex-shrink-0">
+                <KeyRound className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Khodim Lama?</p>
+                <Link 
+                  to="/legacy-claim" 
+                  className="text-sm text-amber-600 dark:text-amber-400 font-semibold hover:underline"
+                >
+                  Klaim Akun Legacy di sini →
+                </Link>
+              </div>
             </div>
-            <Link to="/forgot-password" className="text-sm text-amber-500 font-medium">
-              Lupa password?
-            </Link>
           </div>
 
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-          >
-            {isLoading ? "Memproses..." : "Masuk"}
-            {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-          </Button>
-        </form>
-
-        {/* Klaim Akun */}
-        <div className="mt-5 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-          <p className="text-sm text-foreground text-center">
-            <span className="font-medium">Khodim Lama?</span>{" "}
-            <Link to="/claim-account" className="text-amber-500 font-semibold">
-              Klaim Akun di sini
+          {/* Register Link */}
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Baru di MPJ Apps?{" "}
+            <Link to="/register" className="text-primary font-semibold hover:underline">
+              Daftar Sekarang
             </Link>
           </p>
-        </div>
-
-        {/* Divider */}
-        <div className="relative my-5">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border/30"></div>
-          </div>
-          <div className="relative flex justify-center">
-            <span className="px-3 bg-card text-sm text-muted-foreground">atau</span>
-          </div>
-        </div>
-
-        {/* Register Link */}
-        <p className="text-center text-sm text-muted-foreground">
-          Baru di MPJ Apps?{" "}
-          <Link to="/register" className="text-emerald-500 font-semibold">
-            Buat Akun Baru
-          </Link>
-        </p>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

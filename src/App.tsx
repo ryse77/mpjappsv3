@@ -22,8 +22,7 @@ import NotFound from "./pages/NotFound";
 // ═══════════════════════════════════════════════════════════════
 // STATUS PAGES (Auth required, special handling in ProtectedRoute)
 // ═══════════════════════════════════════════════════════════════
-import Pending from "./pages/Pending";
-import Rejected from "./pages/Rejected";
+import VerificationPending from "./pages/VerificationPending";
 import Forbidden from "./pages/Forbidden";
 
 // ═══════════════════════════════════════════════════════════════
@@ -56,6 +55,7 @@ const App = () => (
             <Route path="/check-institution" element={<CheckInstitution />} />
             <Route path="/institution-submission" element={<InstitutionSubmission />} />
             <Route path="/claim-account" element={<ClaimAccount />} />
+            <Route path="/legacy-claim" element={<ClaimAccount />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-pending" element={<PaymentPending />} />
@@ -64,18 +64,10 @@ const App = () => (
             {/* STATUS PAGES - Auth required, special status handling */}
             {/* ══════════════════════════════════════════════════════ */}
             <Route 
-              path="/pending" 
+              path="/verification-pending" 
               element={
                 <ProtectedRoute>
-                  <Pending />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/rejected" 
-              element={
-                <ProtectedRoute>
-                  <Rejected />
+                  <VerificationPending />
                 </ProtectedRoute>
               } 
             />
