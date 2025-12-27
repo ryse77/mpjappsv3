@@ -1,55 +1,27 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Building2, User, MapPin, Mail, CheckCircle, Phone, Lock, Upload, Eye, EyeOff } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  User,
+  MapPin,
+  Mail,
+  CheckCircle,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+  Map,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-
-// Mapping Kota/Kabupaten ke Regional ID (Jawa Timur)
-const regionalData: Record<string, { regional_id: string; regional_name: string }> = {
-  "Kab. Malang": { regional_id: "01", regional_name: "MALANG RAYA" },
-  "Kota Malang": { regional_id: "01", regional_name: "MALANG RAYA" },
-  "Kota Batu": { regional_id: "01", regional_name: "MALANG RAYA" },
-  "Kab. Blitar": { regional_id: "02", regional_name: "BLITAR RAYA" },
-  "Kota Blitar": { regional_id: "02", regional_name: "BLITAR RAYA" },
-  "Kab. Kediri": { regional_id: "03", regional_name: "KEDIRI RAYA" },
-  "Kota Kediri": { regional_id: "03", regional_name: "KEDIRI RAYA" },
-  "Kab. Tulungagung": { regional_id: "04", regional_name: "TULUNGAGUNG - TRENGGALEK" },
-  "Kab. Trenggalek": { regional_id: "04", regional_name: "TULUNGAGUNG - TRENGGALEK" },
-  "Kab. Nganjuk": { regional_id: "05", regional_name: "NGANJUK - JOMBANG" },
-  "Kab. Jombang": { regional_id: "05", regional_name: "NGANJUK - JOMBANG" },
-  "Kab. Madiun": { regional_id: "06", regional_name: "MADIUN RAYA" },
-  "Kota Madiun": { regional_id: "06", regional_name: "MADIUN RAYA" },
-  "Kab. Magetan": { regional_id: "06", regional_name: "MADIUN RAYA" },
-  "Kab. Ngawi": { regional_id: "06", regional_name: "MADIUN RAYA" },
-  "Kab. Ponorogo": { regional_id: "07", regional_name: "PONOROGO - PACITAN" },
-  "Kab. Pacitan": { regional_id: "07", regional_name: "PONOROGO - PACITAN" },
-  "Kab. Bojonegoro": { regional_id: "08", regional_name: "BOJONEGORO - TUBAN" },
-  "Kab. Tuban": { regional_id: "08", regional_name: "BOJONEGORO - TUBAN" },
-  "Kab. Lamongan": { regional_id: "09", regional_name: "LAMONGAN - GRESIK" },
-  "Kab. Gresik": { regional_id: "09", regional_name: "LAMONGAN - GRESIK" },
-  "Kota Surabaya": { regional_id: "10", regional_name: "SURABAYA RAYA" },
-  "Kab. Sidoarjo": { regional_id: "10", regional_name: "SURABAYA RAYA" },
-  "Kab. Mojokerto": { regional_id: "11", regional_name: "MOJOKERTO - PASURUAN" },
-  "Kota Mojokerto": { regional_id: "11", regional_name: "MOJOKERTO - PASURUAN" },
-  "Kab. Pasuruan": { regional_id: "11", regional_name: "MOJOKERTO - PASURUAN" },
-  "Kota Pasuruan": { regional_id: "11", regional_name: "MOJOKERTO - PASURUAN" },
-  "Kab. Probolinggo": { regional_id: "12", regional_name: "PROBOLINGGO - LUMAJANG" },
-  "Kota Probolinggo": { regional_id: "12", regional_name: "PROBOLINGGO - LUMAJANG" },
-  "Kab. Lumajang": { regional_id: "12", regional_name: "PROBOLINGGO - LUMAJANG" },
-  "Kab. Jember": { regional_id: "13", regional_name: "JEMBER" },
-  "Kab. Bondowoso": { regional_id: "14", regional_name: "BONDOWOSO - SITUBONDO" },
-  "Kab. Situbondo": { regional_id: "14", regional_name: "BONDOWOSO - SITUBONDO" },
-  "Kab. Banyuwangi": { regional_id: "15", regional_name: "BANYUWANGI" },
-  "Kab. Bangkalan": { regional_id: "16", regional_name: "MADURA BARAT" },
-  "Kab. Sampang": { regional_id: "16", regional_name: "MADURA BARAT" },
-  "Kab. Pamekasan": { regional_id: "17", regional_name: "MADURA TIMUR" },
-  "Kab. Sumenep": { regional_id: "17", regional_name: "MADURA TIMUR" },
-};
-
-const kotaKabupatenList = Object.keys(regionalData);
+import { supabase } from "@/integrations/supabase/client";
+import { CityCombobox } from "@/components/registration/CityCombobox";
+import { LocationPicker } from "@/components/registration/LocationPicker";
 
 const InstitutionSubmission = () => {
   const navigate = useNavigate();
@@ -57,144 +29,224 @@ const InstitutionSubmission = () => {
   const { toast } = useToast();
   const searchedName = location.state?.searchedName || "";
 
-  // Section A: Data Pesantren
-  const [pesantrenData, setPesantrenData] = useState({
+  // Wizard step
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Step 1: Data Pokok
+  const [formData, setFormData] = useState({
     namaPesantren: searchedName,
     namaPengasuh: "",
-    alamatLengkap: "",
-    kotaKabupaten: "",
-    emailResmi: "",
-    regional_id: "",
-    regional_name: "",
-  });
-
-  // Section B: Data Koordinator
-  const [koordinatorData, setKoordinatorData] = useState({
-    namaLengkap: "",
+    alamatSingkat: "",
+    cityId: "",
+    cityName: "",
     noWhatsapp: "",
     password: "",
     konfirmasiPassword: "",
   });
 
-  const [buktiFile, setBuktiFile] = useState<File | null>(null);
+  // Step 2: Location
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handlePesantrenChange = (field: string, value: string) => {
-    if (field === "kotaKabupaten") {
-      const region = regionalData[value];
-      setPesantrenData((prev) => ({
-        ...prev,
-        kotaKabupaten: value,
-        regional_id: region?.regional_id || "",
-        regional_name: region?.regional_name || "",
-      }));
-    } else {
-      setPesantrenData((prev) => ({ ...prev, [field]: value }));
-    }
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleKoordinatorChange = (field: string, value: string) => {
-    setKoordinatorData((prev) => ({ ...prev, [field]: value }));
+  const handleCitySelect = (cityId: string, cityName: string) => {
+    setFormData((prev) => ({ ...prev, cityId, cityName }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setBuktiFile(e.target.files[0]);
-    }
+  const handleLocationChange = (lat: number, lng: number) => {
+    setLatitude(lat);
+    setLongitude(lng);
   };
 
-  const isFormValid = () => {
-    const pesantrenValid = 
-      pesantrenData.namaPesantren.trim() &&
-      pesantrenData.namaPengasuh.trim() &&
-      pesantrenData.alamatLengkap.trim() &&
-      pesantrenData.kotaKabupaten &&
-      pesantrenData.emailResmi.trim() &&
-      pesantrenData.emailResmi.includes("@");
-
-    const koordinatorValid =
-      koordinatorData.namaLengkap.trim() &&
-      koordinatorData.noWhatsapp.trim() &&
-      koordinatorData.noWhatsapp.length >= 10 &&
-      koordinatorData.password.length >= 6 &&
-      koordinatorData.password === koordinatorData.konfirmasiPassword;
-
-    return pesantrenValid && koordinatorValid;
+  // Validation for Step 1
+  const isStep1Valid = () => {
+    return (
+      formData.namaPesantren.trim() &&
+      formData.namaPengasuh.trim() &&
+      formData.alamatSingkat.trim() &&
+      formData.cityId &&
+      formData.noWhatsapp.trim().length >= 10 &&
+      formData.password.length >= 6 &&
+      formData.password === formData.konfirmasiPassword
+    );
   };
 
-  const handleSubmit = async () => {
-    if (!isFormValid()) return;
+  // Handle Step 1 completion - Create user and profile
+  const handleStep1Complete = async () => {
+    if (!isStep1Valid()) return;
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Format phone number as email for auth
+      const phoneEmail = `${formData.noWhatsapp}@mpj.local`;
 
-    // Store submission data (simulating database insert)
-    const submissionData = {
-      pesantren: {
-        ...pesantrenData,
-        status: "pending_approval",
-        createdAt: new Date().toISOString(),
-      },
-      koordinator: {
-        namaLengkap: koordinatorData.namaLengkap,
-        noWhatsapp: koordinatorData.noWhatsapp,
-        role: "coordinator",
-        origin_source: "register",
-        status: "pending_approval",
-        createdAt: new Date().toISOString(),
-      },
-      buktiFile: buktiFile?.name || null,
-    };
-    
-    localStorage.setItem("mpj_registration", JSON.stringify(submissionData));
+      // Sign up user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: phoneEmail,
+        password: formData.password,
+      });
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
+      if (authError) {
+        throw authError;
+      }
 
-    toast({
-      title: "Pendaftaran Berhasil!",
-      description: "Admin akan memverifikasi data Anda.",
-    });
+      if (!authData.user) {
+        throw new Error("Gagal membuat akun");
+      }
+
+      // Update profile with pesantren data
+      // Note: region_id will be auto-filled by DB trigger based on city_id
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          nama_pesantren: formData.namaPesantren,
+          nama_pengasuh: formData.namaPengasuh,
+          alamat_singkat: formData.alamatSingkat,
+          city_id: formData.cityId,
+          no_wa_pendaftar: formData.noWhatsapp,
+          // status_account defaults to 'pending' in DB
+          // region_id auto-calculated by enforce_region_immutability trigger
+        })
+        .eq("id", authData.user.id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // Move to Step 2
+      setCurrentStep(2);
+
+      toast({
+        title: "Data tersimpan",
+        description: "Lanjutkan ke langkah berikutnya",
+      });
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast({
+        title: "Gagal mendaftar",
+        description: error.message || "Terjadi kesalahan saat mendaftar",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // Handle Step 2 completion - Update location
+  const handleStep2Complete = async () => {
+    setIsSubmitting(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session?.user) {
+        throw new Error("Sesi tidak ditemukan");
+      }
+
+      // Update profile with location data
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          latitude: latitude,
+          longitude: longitude,
+        })
+        .eq("id", sessionData.session.user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Sign out user (they need to wait for admin approval)
+      await supabase.auth.signOut();
+
+      setIsSuccess(true);
+
+      toast({
+        title: "Pendaftaran Berhasil!",
+        description: "Menunggu verifikasi admin wilayah.",
+      });
+    } catch (error: any) {
+      console.error("Location update error:", error);
+      toast({
+        title: "Gagal menyimpan lokasi",
+        description: error.message || "Terjadi kesalahan",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Skip Step 2 and complete registration
+  const handleSkipStep2 = async () => {
+    setIsSubmitting(true);
+
+    try {
+      // Sign out user (they need to wait for admin approval)
+      await supabase.auth.signOut();
+
+      setIsSuccess(true);
+
+      toast({
+        title: "Pendaftaran Berhasil!",
+        description: "Menunggu verifikasi admin wilayah.",
+      });
+    } catch (error: any) {
+      console.error("Skip error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Success State
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <div className="w-20 h-20 bg-[#166534]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-[#166534]" />
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            Terima Kasih!
+          <h1 className="text-2xl font-bold text-foreground mb-3">
+            Pendaftaran Berhasil
           </h1>
-          <p className="text-gray-600 mb-6 leading-relaxed">
-            Data Anda telah diterima. Admin kami akan memverifikasi data Pesantren Anda <span className="font-semibold">1x24 jam</span>. Silakan tunggu notifikasi WhatsApp untuk login.
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            Menunggu Verifikasi Admin Wilayah. Anda akan menerima notifikasi
+            WhatsApp dalam <span className="font-semibold">1x24 jam</span>.
           </p>
-          <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-2">
+          <div className="bg-muted rounded-xl p-4 mb-6 space-y-2 text-left">
             <div>
-              <p className="text-xs text-gray-500">Pesantren:</p>
-              <p className="font-medium text-gray-900">{pesantrenData.namaPesantren}</p>
+              <p className="text-xs text-muted-foreground">Pesantren:</p>
+              <p className="font-medium text-foreground">
+                {formData.namaPesantren}
+              </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Koordinator:</p>
-              <p className="font-medium text-gray-900">{koordinatorData.namaLengkap}</p>
+              <p className="text-xs text-muted-foreground">Pengasuh:</p>
+              <p className="font-medium text-foreground">
+                {formData.namaPengasuh}
+              </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">WhatsApp:</p>
-              <p className="font-medium text-gray-900">{koordinatorData.noWhatsapp}</p>
+              <p className="text-xs text-muted-foreground">WhatsApp:</p>
+              <p className="font-medium text-foreground">
+                {formData.noWhatsapp}
+              </p>
             </div>
           </div>
           <Button
-            onClick={() => navigate("/")}
-            variant="outline"
-            className="w-full h-12 border-[#166534] text-[#166534] hover:bg-[#166534] hover:text-white rounded-xl"
+            onClick={() => navigate("/login")}
+            className="w-full h-12 rounded-xl"
           >
-            Kembali ke Beranda
+            Ke Halaman Login
           </Button>
         </div>
       </div>
@@ -202,270 +254,317 @@ const InstitutionSubmission = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white py-6 px-4">
+    <div className="min-h-screen bg-background py-6 px-4">
       <div className="w-full max-w-md mx-auto">
         {/* Back Button */}
         <button
-          onClick={() => navigate("/check-institution")}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+          onClick={() =>
+            currentStep === 1 ? navigate("/check-institution") : setCurrentStep(1)
+          }
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Kembali</span>
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Buat Akun Koordinator Baru</h1>
-          <p className="text-gray-500 text-sm">Lengkapi data pesantren dan akun Anda</p>
+        {/* Progress Indicator */}
+        <div className="flex items-center gap-3 mb-6">
+          <div
+            className={`flex-1 h-1.5 rounded-full ${
+              currentStep >= 1 ? "bg-primary" : "bg-muted"
+            }`}
+          />
+          <div
+            className={`flex-1 h-1.5 rounded-full ${
+              currentStep >= 2 ? "bg-primary" : "bg-muted"
+            }`}
+          />
         </div>
 
-        {/* SECTION A: Data Pesantren */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#166534] text-white rounded-full flex items-center justify-center text-xs font-bold">A</div>
-            <h2 className="font-semibold text-gray-900">Data Pesantren</h2>
-          </div>
-          
-          <div className="space-y-4 bg-gray-50 rounded-xl p-4">
-            {/* Nama Pesantren */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Building2 className="w-4 h-4" />
-                Nama Pesantren
-              </label>
-              <Input
-                type="text"
-                placeholder="Masukkan nama pesantren"
-                value={pesantrenData.namaPesantren}
-                onChange={(e) => handlePesantrenChange("namaPesantren", e.target.value)}
-                className="h-11 border-gray-200 bg-white focus:border-[#166534] focus:ring-[#166534]"
-              />
+        {/* Step 1: Data Pokok */}
+        {currentStep === 1 && (
+          <>
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-foreground mb-1">
+                Daftar Pesantren Baru
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Langkah 1: Data Pokok
+              </p>
             </div>
 
-            {/* Nama Pengasuh */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <User className="w-4 h-4" />
-                Nama Pengasuh
-              </label>
-              <Input
-                type="text"
-                placeholder="Masukkan nama pengasuh"
-                value={pesantrenData.namaPengasuh}
-                onChange={(e) => handlePesantrenChange("namaPengasuh", e.target.value)}
-                className="h-11 border-gray-200 bg-white focus:border-[#166534] focus:ring-[#166534]"
-              />
-            </div>
+            {/* Form */}
+            <div className="space-y-6">
+              {/* Section: Data Pesantren */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                    A
+                  </div>
+                  <h2 className="font-semibold text-foreground">
+                    Data Pesantren
+                  </h2>
+                </div>
 
-            {/* Alamat Lengkap */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <MapPin className="w-4 h-4" />
-                Alamat Lengkap
-              </label>
-              <Textarea
-                placeholder="Masukkan alamat lengkap pesantren"
-                value={pesantrenData.alamatLengkap}
-                onChange={(e) => handlePesantrenChange("alamatLengkap", e.target.value)}
-                className="min-h-[80px] border-gray-200 bg-white focus:border-[#166534] focus:ring-[#166534] resize-none"
-              />
-            </div>
+                <div className="space-y-4 bg-muted/50 rounded-xl p-4">
+                  {/* Nama Pesantren */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Building2 className="w-4 h-4" />
+                      Nama Pesantren
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Masukkan nama pesantren"
+                      value={formData.namaPesantren}
+                      onChange={(e) =>
+                        handleChange("namaPesantren", e.target.value)
+                      }
+                      className="h-11"
+                    />
+                  </div>
 
-            {/* Kota/Kabupaten */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <MapPin className="w-4 h-4" />
-                Kota/Kabupaten
-              </label>
-              <Select
-                value={pesantrenData.kotaKabupaten}
-                onValueChange={(value) => handlePesantrenChange("kotaKabupaten", value)}
-              >
-                <SelectTrigger className="h-11 border-gray-200 bg-white focus:border-[#166534] focus:ring-[#166534]">
-                  <SelectValue placeholder="Pilih kota/kabupaten" />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-50 max-h-60">
-                  {kotaKabupatenList.map((kota) => (
-                    <SelectItem key={kota} value={kota}>
-                      {kota}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  {/* Nama Pengasuh */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <User className="w-4 h-4" />
+                      Nama Pengasuh
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Masukkan nama pengasuh"
+                      value={formData.namaPengasuh}
+                      onChange={(e) =>
+                        handleChange("namaPengasuh", e.target.value)
+                      }
+                      className="h-11"
+                    />
+                  </div>
 
-            {/* Nama Regional (Auto-filled) */}
-            {pesantrenData.regional_name && (
-              <div className="space-y-1.5">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <MapPin className="w-4 h-4" />
-                  Nama Regional
-                  <span className="text-xs text-gray-400">(Otomatis)</span>
-                </label>
-                <div className="h-11 px-3 flex items-center bg-gray-100 border border-gray-200 rounded-md text-gray-700">
-                  {pesantrenData.regional_id} - {pesantrenData.regional_name}
+                  {/* Alamat Singkat */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <MapPin className="w-4 h-4" />
+                      Alamat Singkat
+                    </label>
+                    <Textarea
+                      placeholder="Contoh: Jl. Raya No. 123, Kecamatan..."
+                      value={formData.alamatSingkat}
+                      onChange={(e) =>
+                        handleChange("alamatSingkat", e.target.value)
+                      }
+                      className="min-h-[80px] resize-none"
+                    />
+                  </div>
+
+                  {/* Kota/Kabupaten - Searchable Combobox */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <MapPin className="w-4 h-4" />
+                      Kota/Kabupaten
+                    </label>
+                    <CityCombobox
+                      value={formData.cityId}
+                      onSelect={handleCitySelect}
+                    />
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Email Resmi */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Mail className="w-4 h-4" />
-                Email Resmi Pesantren
-              </label>
-              <Input
-                type="email"
-                placeholder="contoh@pesantren.id"
-                value={pesantrenData.emailResmi}
-                onChange={(e) => handlePesantrenChange("emailResmi", e.target.value)}
-                className="h-11 border-gray-200 bg-white focus:border-[#166534] focus:ring-[#166534]"
-              />
+              {/* Section: Data Akun */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                    B
+                  </div>
+                  <h2 className="font-semibold text-foreground">
+                    Data Akun Anda
+                  </h2>
+                </div>
+
+                <div className="space-y-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl p-4">
+                  {/* No WhatsApp */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Phone className="w-4 h-4" />
+                      No. WhatsApp
+                    </label>
+                    <Input
+                      type="tel"
+                      placeholder="08xxxxxxxxxx"
+                      value={formData.noWhatsapp}
+                      onChange={(e) =>
+                        handleChange(
+                          "noWhatsapp",
+                          e.target.value.replace(/\D/g, "")
+                        )
+                      }
+                      className="h-11"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Nomor ini akan digunakan untuk login
+                    </p>
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Lock className="w-4 h-4" />
+                      Buat Password
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Minimal 6 karakter"
+                        value={formData.password}
+                        onChange={(e) =>
+                          handleChange("password", e.target.value)
+                        }
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Konfirmasi Password */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Lock className="w-4 h-4" />
+                      Konfirmasi Password
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Ulangi password"
+                        value={formData.konfirmasiPassword}
+                        onChange={(e) =>
+                          handleChange("konfirmasiPassword", e.target.value)
+                        }
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    {formData.konfirmasiPassword &&
+                      formData.password !== formData.konfirmasiPassword && (
+                        <p className="text-xs text-destructive">
+                          Password tidak cocok
+                        </p>
+                      )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleStep1Complete}
+                disabled={!isStep1Valid() || isSubmitting}
+                className="w-full h-12 rounded-xl"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Menyimpan...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    Lanjutkan
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Step 2: Location Map */}
+        {currentStep === 2 && (
+          <>
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-foreground mb-1">
+                Lokasi Pesantren
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Langkah 2: Tentukan Lokasi di Peta
+              </p>
             </div>
 
-            {/* Upload Bukti */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Upload className="w-4 h-4" />
-                Upload Bukti/Foto
-                <span className="text-gray-400 text-xs">(Opsional)</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="bukti-upload"
-                />
-                <label
-                  htmlFor="bukti-upload"
-                  className="flex items-center justify-center h-11 w-full border border-dashed border-gray-300 rounded-lg bg-white cursor-pointer hover:border-[#166534] transition-colors"
+            <div className="space-y-6">
+              {/* Map Section */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
+                    <Map className="w-3.5 h-3.5" />
+                  </div>
+                  <h2 className="font-semibold text-foreground">
+                    Lokasi di Peta
+                  </h2>
+                </div>
+
+                <div className="bg-muted/50 rounded-xl p-4">
+                  <LocationPicker
+                    latitude={latitude}
+                    longitude={longitude}
+                    onLocationChange={handleLocationChange}
+                  />
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="space-y-3">
+                <Button
+                  onClick={handleStep2Complete}
+                  disabled={isSubmitting}
+                  className="w-full h-12 rounded-xl"
                 >
-                  {buktiFile ? (
-                    <span className="text-sm text-gray-700 truncate px-2">{buktiFile.name}</span>
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Menyimpan...
+                    </span>
                   ) : (
-                    <span className="text-sm text-gray-500">Pilih file...</span>
+                    <span className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Selesaikan Pendaftaran
+                    </span>
                   )}
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
+                </Button>
 
-        {/* SECTION B: Data Koordinator */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#f59e0b] text-white rounded-full flex items-center justify-center text-xs font-bold">B</div>
-            <h2 className="font-semibold text-gray-900">Data Koordinator (Akun Anda)</h2>
-          </div>
-          
-          <div className="space-y-4 bg-amber-50 rounded-xl p-4">
-            {/* Nama Lengkap */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <User className="w-4 h-4" />
-                Nama Lengkap Anda
-              </label>
-              <Input
-                type="text"
-                placeholder="Masukkan nama lengkap"
-                value={koordinatorData.namaLengkap}
-                onChange={(e) => handleKoordinatorChange("namaLengkap", e.target.value)}
-                className="h-11 border-gray-200 bg-white focus:border-[#f59e0b] focus:ring-[#f59e0b]"
-              />
-            </div>
-
-            {/* No WhatsApp */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Phone className="w-4 h-4" />
-                No. WhatsApp
-                <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="tel"
-                placeholder="08xxxxxxxxxx"
-                value={koordinatorData.noWhatsapp}
-                onChange={(e) => handleKoordinatorChange("noWhatsapp", e.target.value.replace(/\D/g, ''))}
-                className="h-11 border-gray-200 bg-white focus:border-[#f59e0b] focus:ring-[#f59e0b]"
-              />
-              <p className="text-xs text-gray-500">Nomor ini akan digunakan untuk login</p>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Lock className="w-4 h-4" />
-                Buat Password
-              </label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Minimal 6 karakter"
-                  value={koordinatorData.password}
-                  onChange={(e) => handleKoordinatorChange("password", e.target.value)}
-                  className="h-11 border-gray-200 bg-white focus:border-[#f59e0b] focus:ring-[#f59e0b] pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                <Button
+                  variant="outline"
+                  onClick={handleSkipStep2}
+                  disabled={isSubmitting}
+                  className="w-full h-12 rounded-xl"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                  Lewati, Atur Nanti
+                </Button>
               </div>
             </div>
-
-            {/* Konfirmasi Password */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Lock className="w-4 h-4" />
-                Konfirmasi Password
-              </label>
-              <div className="relative">
-                <Input
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Ulangi password"
-                  value={koordinatorData.konfirmasiPassword}
-                  onChange={(e) => handleKoordinatorChange("konfirmasiPassword", e.target.value)}
-                  className="h-11 border-gray-200 bg-white focus:border-[#f59e0b] focus:ring-[#f59e0b] pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {koordinatorData.konfirmasiPassword && koordinatorData.password !== koordinatorData.konfirmasiPassword && (
-                <p className="text-xs text-red-500">Password tidak cocok</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Disclaimer */}
-        <p className="text-xs text-gray-500 text-center mb-4 px-2">
-          Dengan mendaftar, akun Anda akan masuk antrian verifikasi Admin sebelum bisa digunakan.
-        </p>
-
-        {/* Submit Button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={!isFormValid() || isSubmitting}
-          className="w-full h-12 bg-[#166534] hover:bg-[#14532d] text-white font-semibold text-base rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? (
-            <span className="flex items-center gap-2">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Mendaftar...
-            </span>
-          ) : (
-            "Daftar Sekarang"
-          )}
-        </Button>
+          </>
+        )}
       </div>
     </div>
   );
