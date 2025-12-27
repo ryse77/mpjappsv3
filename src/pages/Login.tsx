@@ -43,6 +43,9 @@ const Login = () => {
       case 'admin_regional':
         navigate('/admin-regional', { replace: true });
         break;
+      case 'admin_finance':
+        navigate('/finance', { replace: true });
+        break;
       case 'user':
       default:
         navigate('/user', { replace: true });
