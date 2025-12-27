@@ -34,6 +34,7 @@ import MediaDashboard from "./pages/MediaDashboard"; // User
 import CrewDashboard from "./pages/CrewDashboard";   // User
 import FinanceDashboard from "./pages/FinanceDashboard"; // Admin Pusat
 import MajelisMilitanDashboard from "./pages/MajelisMilitanDashboard"; // Admin Pusat
+import SuperAdminDashboard from "./pages/SuperAdminDashboard"; // Super Admin (God Mode)
 import AdminRegionalDetail from "./pages/AdminRegionalDetail"; // Admin Pusat
 
 const queryClient = new QueryClient();
@@ -119,13 +120,13 @@ const App = () => (
               } 
             />
             {/* ══════════════════════════════════════════════════════ */}
-            {/* SUPER ADMIN ROUTES - Majelis Militan Dashboard         */}
+            {/* SUPER ADMIN ROUTES - God Mode Dashboard                */}
             {/* ══════════════════════════════════════════════════════ */}
             <Route 
               path="/super-admin" 
               element={
                 <ProtectedRoute allowedRoles={['admin_pusat']}>
-                  <MajelisMilitanDashboard />
+                  <SuperAdminDashboard />
                 </ProtectedRoute>
               } 
             />
@@ -133,7 +134,7 @@ const App = () => (
               path="/super-admin/*" 
               element={
                 <ProtectedRoute allowedRoles={['admin_pusat']}>
-                  <MajelisMilitanDashboard />
+                  <SuperAdminDashboard />
                 </ProtectedRoute>
               } 
             />
