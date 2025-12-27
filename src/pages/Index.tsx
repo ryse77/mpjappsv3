@@ -43,7 +43,7 @@ const Index = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/30 rounded-full mb-6">
                 <Sparkles className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Platform Komunitas Digital Media Pesantren</span>
+                <span className="text-sm font-medium text-accent">Platform Komunitas Media Pesantren</span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-primary leading-tight mb-5">
