@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   LogOut, 
@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import RegionalDashboardHome from "@/components/regional-dashboard/RegionalDashboardHome";
 import ValidasiPendaftar from "@/components/regional-dashboard/ValidasiPendaftar";
 import ManajemenEvent from "@/components/regional-dashboard/ManajemenEvent";
@@ -25,21 +26,49 @@ import Pengaturan from "@/components/regional-dashboard/Pengaturan";
 
 type ViewType = "beranda" | "verifikasi" | "data-utama" | "event" | "regional-hub" | "pengaturan";
 
-const menuItems = [
-  { id: "beranda" as ViewType, label: "DASHBOARD BERANDA", icon: LayoutDashboard },
-  { id: "verifikasi" as ViewType, label: "VERIFIKASI PESANTREN", icon: CheckCircle, badge: 5 },
-  { id: "data-utama" as ViewType, label: "DATA UTAMA", icon: Database },
-  { id: "event" as ViewType, label: "MANAJEMEN EVENT", icon: Calendar },
-  { id: "regional-hub" as ViewType, label: "REGIONAL-HUB", icon: Share2 },
-  { id: "pengaturan" as ViewType, label: "PENGATURAN", icon: Settings },
-];
+interface MenuItem {
+  id: ViewType;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
+}
 
 const RegionalDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("beranda");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Fetch pending claims count
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      if (!profile?.region_id) return;
+      
+      const { count, error } = await supabase
+        .from('pesantren_claims')
+        .select('*', { count: 'exact', head: true })
+        .eq('region_id', profile.region_id)
+        .eq('status', 'pending');
+      
+      if (!error && count !== null) {
+        setPendingCount(count);
+      }
+    };
+
+    fetchPendingCount();
+  }, [profile?.region_id]);
+
+  // Dynamic menu items with real pending count
+  const menuItems: MenuItem[] = [
+    { id: "beranda", label: "DASHBOARD BERANDA", icon: LayoutDashboard },
+    { id: "verifikasi", label: "VERIFIKASI PESANTREN", icon: CheckCircle, badge: pendingCount > 0 ? pendingCount : undefined },
+    { id: "data-utama", label: "DATA UTAMA", icon: Database },
+    { id: "event", label: "MANAJEMEN EVENT", icon: Calendar },
+    { id: "regional-hub", label: "REGIONAL-HUB", icon: Share2 },
+    { id: "pengaturan", label: "PENGATURAN", icon: Settings },
+  ];
 
   const handleLogout = async () => {
     await signOut();
