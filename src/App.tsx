@@ -36,8 +36,6 @@ import FinanceDashboard from "./pages/FinanceDashboard"; // Admin Pusat
 import MajelisMilitanDashboard from "./pages/MajelisMilitanDashboard"; // Admin Pusat
 import SuperAdminDashboard from "./pages/SuperAdminDashboard"; // Super Admin (God Mode)
 import AdminRegionalDetail from "./pages/AdminRegionalDetail"; // Admin Pusat
-import RegionalMapping from "./pages/admin-pusat/RegionalMapping"; // Regional Mapping
-import RegionalDataAkun from "./pages/admin-pusat/RegionalDataAkun"; // Regional Admin Assignment
 
 const queryClient = new QueryClient();
 
@@ -165,22 +163,6 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/admin-pusat/regional-mapping" 
-              element={
-                <ProtectedRoute allowedRoles={['admin_pusat']}>
-                  <RegionalMapping />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin-pusat/regional-akun" 
-              element={
-                <ProtectedRoute allowedRoles={['admin_pusat']}>
-                  <RegionalDataAkun />
-                </ProtectedRoute>
-              } 
-            />
             {/* ══════════════════════════════════════════════════════ */}
             {/* ADMIN REGIONAL ROUTES - role === 'admin_regional' ONLY */}
             {/* ══════════════════════════════════════════════════════ */}
@@ -236,11 +218,6 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-
-            {/* ══════════════════════════════════════════════════════ */}
-            {/* LEGACY REDIRECTS (to be removed after migration)      */}
-            {/* ══════════════════════════════════════════════════════ */}
-            {/* These are kept temporarily for backward compatibility */}
 
             {/* ══════════════════════════════════════════════════════ */}
             {/* 404 - Not Found                                       */}

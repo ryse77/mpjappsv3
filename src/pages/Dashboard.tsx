@@ -14,9 +14,7 @@ import {
   X,
   Zap,
   Map,
-  Users,
-  Wallet,
-  Search
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,6 +28,7 @@ import AdminPusatMilitansi from "@/components/admin-pusat/AdminPusatMilitansi";
 import AdminPusatHub from "@/components/admin-pusat/AdminPusatHub";
 import AdminPusatPengaturan from "@/components/admin-pusat/AdminPusatPengaturan";
 import AdminPusatKeuangan from "@/components/admin-pusat/AdminPusatKeuangan";
+import AdminPusatRegional from "@/components/admin-pusat/AdminPusatRegional";
 import GlobalSearchNIPNIAM from "@/components/admin-pusat/GlobalSearchNIPNIAM";
 
 // Super Admin email check
@@ -43,7 +42,8 @@ type ViewType =
   | "manajemen-militansi" 
   | "mpj-hub"
   | "pengaturan"
-  | "keuangan";
+  | "keuangan"
+  | "manajemen-regional";
 
 interface MenuItem {
   id: ViewType;
@@ -52,26 +52,16 @@ interface MenuItem {
   badge?: number;
 }
 
-interface ExternalLink {
-  to: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
 const menuItems: MenuItem[] = [
   { id: "dashboard", label: "DASHBOARD BERANDA", icon: LayoutDashboard },
   { id: "verifikasi", label: "VERIFIKASI", icon: CheckCircle, badge: 6 },
   { id: "keuangan", label: "ADMINISTRASI KEUANGAN", icon: Wallet },
   { id: "master-data", label: "MASTER DATA", icon: Database },
+  { id: "manajemen-regional", label: "MANAJEMEN REGIONAL", icon: Map },
   { id: "manajemen-event", label: "MANAJEMEN EVENT", icon: Calendar },
   { id: "manajemen-militansi", label: "MANAJEMEN MILITANSI", icon: Medal },
   { id: "mpj-hub", label: "MPJ-HUB", icon: Layers },
   { id: "pengaturan", label: "PENGATURAN", icon: Settings },
-];
-
-const externalLinks: ExternalLink[] = [
-  { to: "/admin-pusat/regional-mapping", label: "REGIONAL MAPPING", icon: Map },
-  { to: "/admin-pusat/regional-akun", label: "DATA AKUN REGIONAL", icon: Users },
 ];
 
 const Dashboard = () => {
@@ -102,6 +92,8 @@ const Dashboard = () => {
         return <AdminPusatKeuangan />;
       case "master-data":
         return <AdminPusatMasterData />;
+      case "manajemen-regional":
+        return <AdminPusatRegional />;
       case "manajemen-event":
         return <AdminPusatEvent />;
       case "manajemen-militansi":
@@ -187,30 +179,9 @@ const Dashboard = () => {
           ))}
         </nav>
 
-        {/* External Page Links */}
-        <div className="px-3 py-2 border-t border-emerald-600">
-          {sidebarOpen && (
-            <span className="text-xs text-emerald-300 uppercase tracking-wider px-3 mb-2 block">
-              Manajemen Regional
-            </span>
-          )}
-          {externalLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-white hover:bg-emerald-600 transition-colors mb-1"
-            >
-              <link.icon className="h-5 w-5 flex-shrink-0" />
-              {sidebarOpen && (
-                <span className="text-sm">{link.label}</span>
-              )}
-            </Link>
-          ))}
-        </div>
-
         {/* Super Admin Link */}
         {isSuperAdmin && (
-          <div className="px-3 py-2">
+          <div className="px-3 py-2 border-t border-emerald-600">
             <Link
               to="/super-admin"
               className="w-full flex items-center gap-3 px-3 py-3 rounded-lg bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors border border-red-500/30"
