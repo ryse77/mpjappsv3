@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, ArrowRight, Phone, Lock, KeyRound, Users } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Phone, Lock, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,41 +26,11 @@ const Login = () => {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
+  
   const [isCheckingClaim, setIsCheckingClaim] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, profile, isLoading: authLoading } = useAuth();
-
-  const handleSeedUsers = async () => {
-    setIsSeeding(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('seed-dev-users');
-      
-      if (error) {
-        toast({
-          title: "Seed Gagal",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Seed Berhasil!",
-        description: `${data.results?.length || 0} akun dummy berhasil dibuat/diupdate`,
-      });
-      console.log("Seed results:", data);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Gagal menjalankan seed function",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
 
   /**
    * Check pesantren_claims and redirect based on claim status
@@ -364,31 +334,6 @@ const Login = () => {
             </Link>
           </p>
 
-          {/* Dev Seed Button */}
-          <div className="mt-6 pt-4 border-t border-dashed border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSeedUsers}
-              disabled={isSeeding}
-              className="w-full text-xs h-9 text-muted-foreground hover:text-foreground"
-            >
-              {isSeeding ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  Seeding...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Users className="w-3 h-3" />
-                  SEED DUMMY USERS (DEV)
-                </span>
-              )}
-            </Button>
-            <p className="text-[10px] text-muted-foreground text-center mt-2">
-              Password: password123
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
