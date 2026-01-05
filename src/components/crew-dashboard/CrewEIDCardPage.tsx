@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Download, QrCode, Shield, Lock, FileText, RotateCcw, Facebook, Instagram, Twitter, Youtube, Info } from "lucide-react";
+import { Download, QrCode, Shield, Lock, FileText, RotateCcw, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { VirtualIDCard } from "@/components/shared/VirtualIDCard";
+import { VirtualMemberCard, PhysicalMemberCard } from "@/components/shared/MemberCard";
 import { formatNIAM, getXPLevel } from "@/lib/id-utils";
 import { XPLevelBadge } from "@/components/shared/LevelBadge";
-import logoMpj from "@/assets/logo-mpj.png";
 
 interface CrewEIDCardPageProps {
   isGold: boolean;
@@ -26,7 +25,6 @@ interface CrewEIDCardPageProps {
 
 const CrewEIDCardPage = ({ isGold, onBack, debugCrew: propDebugCrew }: CrewEIDCardPageProps) => {
   const location = useLocation();
-  const [isFlipped, setIsFlipped] = useState(false);
 
   // Support debug mode via location.state OR props
   const stateDebugCrew = (location.state as any)?.debugCrew;
@@ -35,23 +33,23 @@ const CrewEIDCardPage = ({ isGold, onBack, debugCrew: propDebugCrew }: CrewEIDCa
 
   const userData = isDebugMode && debugCrew ? {
     name: debugCrew.nama,
-    noId: formatNIAM(debugCrew.niam, true),
-    asalMedia: debugCrew.institution_name || "PP. Placeholder",
-    alamatPesantren: "Jl. Raya Pesantren No. 45, Singosari, Malang",
+    noId: debugCrew.niam || "AN260100102",
+    asalMedia: debugCrew.institution_name || "PP. Al-Hikmah Malang",
+    alamatPesantren: "Jl. Raya Pesantren No. 45, Singosari, Malang, Jawa Timur",
     role: debugCrew.jabatan || "Kru Media",
-    xp: debugCrew.xp_level || 0,
+    xp: debugCrew.xp_level || 2500,
     skills: debugCrew.skill || ["Fotografer", "Editor"],
     socialMedia: {
-      facebook: "@mpj.nurulhuda",
-      instagram: "@mpj_nurulhuda",
-      twitter: "@mpj_nurulhuda",
-      youtube: "MPJ Nurul Huda",
+      facebook: "@mpj.alhikmah",
+      instagram: "@mpj_alhikmah",
+      twitter: "@mpj_alhikmah",
+      youtube: "MPJ Al-Hikmah",
     },
   } : {
     name: "Ahmad Fauzi",
     noId: "AN260100101",
     asalMedia: "PP. Nurul Huda",
-    alamatPesantren: "Jl. Raya Pesantren No. 45, Singosari, Malang",
+    alamatPesantren: "Jl. Raya Pesantren No. 45, Singosari, Malang, Jawa Timur",
     role: "Kru Media",
     xp: 150,
     skills: ["Fotografer", "Editor", "Desainer"],
@@ -122,7 +120,7 @@ const CrewEIDCardPage = ({ isGold, onBack, debugCrew: propDebugCrew }: CrewEIDCa
           <TabsTrigger value="physical">Physical Card</TabsTrigger>
         </TabsList>
 
-        {/* TAB 1: Virtual Card - Using new component */}
+        {/* TAB 1: Virtual Card - Landscape 16:9 */}
         <TabsContent value="virtual" className="space-y-4">
           {/* XP Badge Display */}
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -130,83 +128,53 @@ const CrewEIDCardPage = ({ isGold, onBack, debugCrew: propDebugCrew }: CrewEIDCa
             <XPLevelBadge xp={userData.xp} size="md" showXP />
           </div>
           
-          {/* Virtual ID Card - Simple & Elegant */}
-          <VirtualIDCard
-            type="crew"
-            niam={userData.noId}
-            crewName={userData.name}
-            jabatan={userData.role}
+          {/* Virtual Member Card - Landscape with flip */}
+          <VirtualMemberCard
+            noId={userData.noId}
+            name={userData.name}
+            asalMedia={userData.asalMedia}
+            alamat={userData.alamatPesantren}
+            role={userData.role}
             xp={userData.xp}
+            socialMedia={userData.socialMedia}
           />
+
+          {/* Info Notice */}
+          <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200 max-w-md mx-auto">
+            <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-medium text-amber-800">Kartu Virtual</p>
+              <p className="text-amber-700 text-xs mt-0.5">
+                Tanpa foto & barcode untuk tampilan aplikasi. Klik kartu untuk melihat sisi belakang.
+              </p>
+            </div>
+          </div>
         </TabsContent>
 
-        {/* TAB 2: Physical Card - Portrait (ID Badge Ratio) */}
+        {/* TAB 2: Physical Card - Portrait for Events */}
         <TabsContent value="physical" className="space-y-4">
-          <Card className="overflow-hidden shadow-xl border-0 mx-auto max-w-[280px]">
-            <CardContent className="p-0">
-              {/* Portrait ID Badge - Standard ID ratio approx 2:3 */}
-              <div className="aspect-[2/3] bg-gradient-to-b from-primary via-primary to-primary/90 relative overflow-hidden">
-                {/* Header with Logo */}
-                <div className="bg-primary-foreground/10 py-3 px-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <img src={logoMpj} alt="MPJ" className="w-10 h-10 object-contain" />
-                    <div className="text-center">
-                      <h2 className="text-sm font-bold text-primary-foreground">MEDIA PONDOK</h2>
-                      <p className="text-[9px] text-primary-foreground/80">JAWA TIMUR</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Photo Section */}
-                <div className="flex justify-center py-4">
-                  <div className="w-24 h-24 bg-primary-foreground rounded-full flex items-center justify-center text-primary text-3xl font-bold shadow-lg border-4 border-primary-foreground/30">
-                    AF
-                  </div>
-                </div>
-
-                {/* User Info */}
-                <div className="px-4 text-center space-y-2">
-                  <div>
-                    <h3 className="text-lg font-bold text-primary-foreground">{userData.name}</h3>
-                    <p className="text-sm text-primary-foreground/80">{userData.asalMedia}</p>
-                  </div>
-                  <div className="bg-primary-foreground/10 rounded-lg py-2 px-3">
-                    <p className="text-[10px] text-primary-foreground/70 line-clamp-2">{userData.alamatPesantren}</p>
-                  </div>
-                </div>
-
-                {/* Footer with QR Code */}
-                <div className="absolute bottom-0 left-0 right-0 bg-primary-foreground p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    {/* QR Code */}
-                    <div className="bg-white p-2 rounded-lg shadow-inner">
-                      <QrCode className="h-14 w-14 text-primary" />
-                    </div>
-                    {/* ID Info */}
-                    <div className="flex-1 text-right">
-                      <p className="text-[10px] text-muted-foreground uppercase">No. Anggota</p>
-                      <p className="text-sm font-bold text-primary">{userData.noId}</p>
-                      <Badge className="mt-1 bg-primary text-primary-foreground text-[9px]">
-                        {userData.role}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Physical Member Card - Portrait with flip */}
+          <PhysicalMemberCard
+            noId={userData.noId}
+            name={userData.name}
+            asalMedia={userData.asalMedia}
+            alamat={userData.alamatPesantren}
+            role={userData.role}
+            xp={userData.xp}
+            socialMedia={userData.socialMedia}
+          />
 
           {/* Download Button */}
           <Button 
             onClick={handleDownloadPDF}
-            className="w-full bg-primary hover:bg-primary/90"
+            className="w-full max-w-[280px] mx-auto flex bg-primary hover:bg-primary/90"
           >
             <Download className="h-4 w-4 mr-2" />
             Download Layout Cetak (PDF)
           </Button>
 
           {/* Physical Card Info */}
-          <Card>
+          <Card className="max-w-[280px] mx-auto">
             <CardContent className="p-4">
               <h3 className="font-semibold text-foreground mb-2">Layout Kartu Cetak</h3>
               <p className="text-sm text-muted-foreground">
