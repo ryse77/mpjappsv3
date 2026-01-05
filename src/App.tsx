@@ -18,6 +18,7 @@ import PaymentPending from "./pages/PaymentPending";
 import CheckInstitution from "./pages/CheckInstitution";
 import InstitutionSubmission from "./pages/InstitutionSubmission";
 import NotFound from "./pages/NotFound";
+import DebugView from "./pages/DebugView";
 
 // ═══════════════════════════════════════════════════════════════
 // STATUS PAGES (Auth required, special handling in ProtectedRoute)
@@ -60,7 +61,11 @@ const App = () => (
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-pending" element={<PaymentPending />} />
-
+            
+            {/* ══════════════════════════════════════════════════════ */}
+            {/* DEBUG VIEW - Public audit page (dev only)             */}
+            {/* ══════════════════════════════════════════════════════ */}
+            <Route path="/debug-view" element={<DebugView />} />
             {/* ══════════════════════════════════════════════════════ */}
             {/* STATUS PAGES - Auth required, special status handling */}
             {/* ══════════════════════════════════════════════════════ */}

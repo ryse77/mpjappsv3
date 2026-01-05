@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Building, 
@@ -21,6 +21,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatNIP, getProfileLevelInfo, calculateProfileLevel } from "@/lib/id-utils";
+import { ProfileLevelBadge, VerifiedBadge } from "@/components/shared/LevelBadge";
 import MediaDashboardHome from "@/components/media-dashboard/MediaDashboardHome";
 import IdentitasPesantren from "@/components/media-dashboard/IdentitasPesantren";
 import ManajemenKru from "@/components/media-dashboard/ManajemenKru";
@@ -37,21 +39,34 @@ const menuItems = [
   { id: "kru" as ViewType, label: "MANAJEMEN CREW (TIM MEDIA)", icon: Users },
   { id: "eid" as ViewType, label: "E-ID CARD", icon: IdCard },
   { id: "administrasi" as ViewType, label: "ADMINISTRASI", icon: CreditCard },
-  { id: "hub" as ViewType, label: "MPJ-HUB", icon: Layers },
+  { id: "hub" as ViewType, label: "MPJ-HUB", icon: Layers, comingSoon: true },
   { id: "pengaturan" as ViewType, label: "PENGATURAN", icon: Settings },
 ];
 
 const MediaDashboard = () => {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const location = useLocation();
+  const { profile: authProfile, signOut } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("beranda");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { toast } = useToast();
   
+  // Support debug mode via location.state
+  const debugProfile = (location.state as any)?.debugProfile;
+  const isDebugMode = (location.state as any)?.isDebugMode;
+  
+  // Use debug profile if available, otherwise use auth profile
+  const profile = isDebugMode && debugProfile ? debugProfile : authProfile;
+  
   const paymentStatus = profile?.status_payment ?? 'unpaid';
   const profileLevel = profile?.profile_level ?? 'basic';
+  const levelInfo = getProfileLevelInfo(profileLevel);
 
   const handleLogout = async () => {
+    if (isDebugMode) {
+      navigate('/debug-view');
+      return;
+    }
     await signOut();
     toast({
       title: "Berhasil keluar",
@@ -60,6 +75,23 @@ const MediaDashboard = () => {
     navigate('/login', { replace: true });
   };
 
+  // Coming Soon placeholder component
+  const ComingSoonPlaceholder = ({ title }: { title: string }) => (
+    <div className="flex flex-col items-center justify-center min-h-[400px] bg-gradient-to-br from-amber-50 to-white rounded-2xl border border-amber-100">
+      <div className="text-center space-y-4">
+        <div className="w-20 h-20 mx-auto bg-amber-100 rounded-full flex items-center justify-center">
+          <Layers className="w-10 h-10 text-amber-600" />
+        </div>
+        <h3 className="text-2xl font-bold text-amber-800">{title}</h3>
+        <p className="text-amber-600 max-w-md">
+          Fitur ini sedang dalam pengembangan dan akan segera tersedia pada update berikutnya.
+        </p>
+        <Badge className="bg-amber-100 text-amber-700 border-amber-200 px-4 py-2">
+          Coming Soon
+        </Badge>
+      </div>
+    </div>
+  );
   const renderContent = () => {
     switch (activeView) {
       case "beranda":
@@ -90,7 +122,7 @@ const MediaDashboard = () => {
           />
         );
       case "hub":
-        return <MPJHub />;
+        return <ComingSoonPlaceholder title="MPJ-HUB" />;
       case "pengaturan":
         return <Pengaturan />;
       default:
@@ -109,16 +141,8 @@ const MediaDashboard = () => {
     setMobileSidebarOpen(false);
   };
 
-  const getLevelBadge = () => {
-    switch (profileLevel) {
-      case "silver": return { label: "Silver", class: "bg-slate-400" };
-      case "gold": return { label: "Gold", class: "bg-[#f59e0b]" };
-      case "platinum": return { label: "Platinum", class: "bg-purple-500" };
-      default: return { label: "Basic", class: "bg-slate-500" };
-    }
-  };
-
-  const levelBadge = getLevelBadge();
+  // Format NIP for display (clean, without dots)
+  const displayNIP = profile?.nip ? formatNIP(profile.nip, true) : null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -164,7 +188,12 @@ const MediaDashboard = () => {
               )}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
-              <span className="text-sm">{item.label}</span>
+              <span className="text-sm flex-1">{item.label}</span>
+              {item.comingSoon && (
+                <Badge className="bg-amber-500/80 text-white text-[10px] px-1.5">
+                  Soon
+                </Badge>
+              )}
             </button>
           ))}
         </nav>
@@ -220,30 +249,31 @@ const MediaDashboard = () => {
             {/* Desktop: Full title with badge and NIP */}
             <div className="hidden md:block">
               <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold text-slate-900">
-                  Dashboard Koordinator
-                </h2>
-                {profile?.nip && (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {profile?.nama_pesantren || 'Media Pesantren'}
+                  </h2>
+                  <VerifiedBadge isVerified={levelInfo.isVerified} size="md" />
+                </div>
+                {displayNIP && (
                   <Badge className="bg-emerald-100 text-emerald-800 font-mono text-sm">
-                    NIP: {profile.nip}
+                    NIP: {displayNIP}
                   </Badge>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 <p className="text-sm text-slate-600">
-                  {profile?.nama_pesantren || 'Media Pesantren'}
+                  Dashboard Koordinator
                 </p>
-                <span className={cn("text-xs px-2 py-0.5 rounded-full text-white font-medium", levelBadge.class)}>
-                  {levelBadge.label}
-                </span>
+                <ProfileLevelBadge level={profileLevel} size="sm" />
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             {/* NIP Badge - Mobile */}
-            {profile?.nip && (
+            {displayNIP && (
               <div className="flex md:hidden items-center gap-1.5 bg-emerald-100 text-emerald-800 px-2 py-1.5 rounded-lg text-xs font-mono">
-                {profile.nip}
+                {displayNIP}
               </div>
             )}
             {/* E-ID Badge - Icon only on mobile */}

@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Download, QrCode, Shield, Lock, FileText, RotateCcw, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Download, QrCode, Shield, Lock, FileText, RotateCcw, Facebook, Instagram, Twitter, Youtube, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { VirtualIDCard } from "@/components/shared/VirtualIDCard";
+import { formatNIAM, getXPLevel } from "@/lib/id-utils";
+import { XPLevelBadge } from "@/components/shared/LevelBadge";
 import logoMpj from "@/assets/logo-mpj.png";
 
 interface CrewEIDCardPageProps {
@@ -13,14 +17,34 @@ interface CrewEIDCardPageProps {
 }
 
 const CrewEIDCardPage = ({ isGold, onBack }: CrewEIDCardPageProps) => {
+  const location = useLocation();
   const [isFlipped, setIsFlipped] = useState(false);
 
-  const userData = {
+  // Support debug mode via location.state
+  const debugCrew = (location.state as any)?.debugCrew;
+  const isDebugMode = (location.state as any)?.isDebugMode;
+
+  const userData = isDebugMode && debugCrew ? {
+    name: debugCrew.nama,
+    noId: formatNIAM(debugCrew.niam, true),
+    asalMedia: debugCrew.institution_name || "PP. Placeholder",
+    alamatPesantren: "Jl. Raya Pesantren No. 45, Singosari, Malang",
+    role: debugCrew.jabatan || "Kru Media",
+    xp: debugCrew.xp_level || 0,
+    skills: debugCrew.skill || ["Fotografer", "Editor"],
+    socialMedia: {
+      facebook: "@mpj.nurulhuda",
+      instagram: "@mpj_nurulhuda",
+      twitter: "@mpj_nurulhuda",
+      youtube: "MPJ Nurul Huda",
+    },
+  } : {
     name: "Ahmad Fauzi",
-    noId: "200100101",
+    noId: "AN260100101",
     asalMedia: "PP. Nurul Huda",
     alamatPesantren: "Jl. Raya Pesantren No. 45, Singosari, Malang",
     role: "Kru Media",
+    xp: 150,
     skills: ["Fotografer", "Editor", "Desainer"],
     socialMedia: {
       facebook: "@mpj.nurulhuda",
@@ -30,6 +54,8 @@ const CrewEIDCardPage = ({ isGold, onBack }: CrewEIDCardPageProps) => {
     },
   };
 
+  const xpLevel = getXPLevel(userData.xp);
+
   const handleDownloadPDF = () => {
     toast({
       title: "Download PDF",
@@ -37,7 +63,7 @@ const CrewEIDCardPage = ({ isGold, onBack }: CrewEIDCardPageProps) => {
     });
   };
 
-  if (!isGold) {
+  if (!isGold && !isDebugMode) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
         <Card className="w-full max-w-sm bg-muted relative overflow-hidden">
@@ -87,139 +113,22 @@ const CrewEIDCardPage = ({ isGold, onBack }: CrewEIDCardPageProps) => {
           <TabsTrigger value="physical">Physical Card</TabsTrigger>
         </TabsList>
 
-        {/* TAB 1: Virtual Card - Landscape (Credit Card Ratio) */}
+        {/* TAB 1: Virtual Card - Using new component */}
         <TabsContent value="virtual" className="space-y-4">
-          <div className="relative perspective-1000">
-            <div 
-              className={`relative transition-transform duration-700 transform-style-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
-              onClick={() => setIsFlipped(!isFlipped)}
-              style={{ transformStyle: 'preserve-3d' }}
-            >
-              {/* Front Side */}
-              <Card 
-                className="overflow-hidden shadow-xl border-0"
-                style={{ backfaceVisibility: 'hidden' }}
-              >
-                <CardContent className="p-0">
-                  <div className="aspect-[85.6/53.98] bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-5 relative overflow-hidden">
-                    {/* MPJ Logo Watermark */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                      <img 
-                        src={logoMpj} 
-                        alt="MPJ Watermark" 
-                        className="w-48 h-48 object-contain"
-                      />
-                    </div>
-
-                    {/* Wave Pattern */}
-                    <div className="absolute bottom-0 left-0 right-0 opacity-10">
-                      <svg viewBox="0 0 400 100" className="w-full">
-                        <path
-                          d="M0 50 Q100 20 200 50 T400 50 L400 100 L0 100 Z"
-                          fill="white"
-                        />
-                      </svg>
-                    </div>
-
-                    {/* Content */}
-                    <div className="relative z-10 h-full flex flex-col">
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <img src={logoMpj} alt="MPJ" className="w-8 h-8 object-contain" />
-                          <div>
-                            <h2 className="text-sm font-bold text-primary-foreground">MEDIA PONDOK</h2>
-                            <p className="text-[9px] text-primary-foreground/70">Jawa Timur</p>
-                          </div>
-                        </div>
-                        <Badge className="bg-accent text-accent-foreground text-[9px] font-bold">
-                          MEMBER
-                        </Badge>
-                      </div>
-
-                      {/* Main Info - NO PHOTO, NO BARCODE */}
-                      <div className="flex-1 flex flex-col justify-center space-y-3">
-                        <div>
-                          <p className="text-[10px] text-primary-foreground/60 uppercase tracking-wider">No. ID</p>
-                          <p className="text-lg font-bold text-primary-foreground tracking-widest">{userData.noId}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-primary-foreground/60 uppercase tracking-wider">Nama Lengkap</p>
-                          <p className="text-base font-semibold text-primary-foreground">{userData.name}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-primary-foreground/60 uppercase tracking-wider">Asal Media</p>
-                          <p className="text-sm text-primary-foreground/90">{userData.asalMedia}</p>
-                        </div>
-                      </div>
-
-                      {/* Footer - Address */}
-                      <div className="mt-2">
-                        <p className="text-[9px] text-primary-foreground/60 line-clamp-2">{userData.alamatPesantren}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Back Side */}
-              {isFlipped && (
-                <Card 
-                  className="overflow-hidden shadow-xl border-0 absolute inset-0"
-                  style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-                >
-                  <CardContent className="p-0">
-                    <div className="aspect-[85.6/53.98] bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-5 relative overflow-hidden">
-                      {/* MPJ Logo Watermark */}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                        <img src={logoMpj} alt="MPJ Watermark" className="w-48 h-48 object-contain" />
-                      </div>
-
-                      {/* Content */}
-                      <div className="relative z-10 h-full flex flex-col items-center justify-center">
-                        <h3 className="text-sm font-bold text-primary-foreground mb-4">Social Media</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-primary-foreground/90">
-                            <Facebook className="h-4 w-4" />
-                            <span className="text-xs">{userData.socialMedia.facebook}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-primary-foreground/90">
-                            <Instagram className="h-4 w-4" />
-                            <span className="text-xs">{userData.socialMedia.instagram}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-primary-foreground/90">
-                            <Twitter className="h-4 w-4" />
-                            <span className="text-xs">{userData.socialMedia.twitter}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-primary-foreground/90">
-                            <Youtube className="h-4 w-4" />
-                            <span className="text-xs">{userData.socialMedia.youtube}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+          {/* XP Badge Display */}
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="text-sm text-muted-foreground">Militansi Level:</span>
+            <XPLevelBadge xp={userData.xp} size="md" showXP />
           </div>
-
-          {/* Flip Hint */}
-          <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-            <RotateCcw className="h-4 w-4" />
-            <span>Tap kartu untuk melihat sisi belakang</span>
-          </div>
-
-          {/* Virtual Card Info */}
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-foreground mb-2">Virtual Card</h3>
-              <p className="text-sm text-muted-foreground">
-                Kartu virtual ini digunakan untuk tampilan di dalam aplikasi. 
-                Sesuai dengan SOP MPJ, kartu virtual tidak memuat foto dan barcode.
-              </p>
-            </CardContent>
-          </Card>
+          
+          {/* Virtual ID Card - Simple & Elegant */}
+          <VirtualIDCard
+            type="crew"
+            niam={userData.noId}
+            crewName={userData.name}
+            jabatan={userData.role}
+            xp={userData.xp}
+          />
         </TabsContent>
 
         {/* TAB 2: Physical Card - Portrait (ID Badge Ratio) */}
