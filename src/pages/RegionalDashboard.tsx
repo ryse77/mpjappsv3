@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   LogOut, 
   Menu,
@@ -36,11 +36,19 @@ interface MenuItem {
 
 const RegionalDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const { signOut, profile } = useAuth();
+  const { signOut, profile: authProfile } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("beranda");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+
+  // Support debug mode via location.state
+  const debugProfile = (location.state as any)?.debugProfile;
+  const isDebugMode = (location.state as any)?.isDebugMode;
+  
+  // Use debug profile if available, otherwise use auth profile
+  const profile = isDebugMode && debugProfile ? debugProfile : authProfile;
 
   // Fetch pending claims count
   useEffect(() => {
@@ -72,6 +80,10 @@ const RegionalDashboard = () => {
   ];
 
   const handleLogout = async () => {
+    if (isDebugMode) {
+      navigate('/debug-view');
+      return;
+    }
     await signOut();
     toast({
       title: "Berhasil keluar",

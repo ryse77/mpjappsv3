@@ -249,7 +249,9 @@ const ManajemenKru = ({ paymentStatus }: ManajemenKruProps) => {
     }
   };
 
-  const isAddDisabled = paymentStatus === "unpaid";
+  const FREE_SLOT_LIMIT = 3;
+  const isSlotLimitReached = crewMembers.length >= FREE_SLOT_LIMIT;
+  const isAddDisabled = paymentStatus === "unpaid" || isSlotLimitReached;
   const getAvatarInitials = (name: string) => {
     return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
@@ -268,7 +270,7 @@ const ManajemenKru = ({ paymentStatus }: ManajemenKruProps) => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Manajemen Crew</h1>
           <p className="text-muted-foreground">
-            Kelola anggota tim media pesantren Anda ({crewMembers.length} anggota)
+            Kelola anggota tim media pesantren Anda ({crewMembers.length}/{FREE_SLOT_LIMIT} slot gratis)
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -373,13 +375,34 @@ const ManajemenKru = ({ paymentStatus }: ManajemenKruProps) => {
               </TooltipTrigger>
               {isAddDisabled && (
                 <TooltipContent>
-                  <p>Fitur terkunci (Unpaid) - Lunasi tagihan untuk membuka</p>
+                  <p>
+                    {paymentStatus === "unpaid" 
+                      ? "Fitur terkunci (Unpaid) - Lunasi tagihan untuk membuka"
+                      : `Batas slot gratis tercapai (${FREE_SLOT_LIMIT} anggota)`
+                    }
+                  </p>
                 </TooltipContent>
               )}
             </Tooltip>
           </TooltipProvider>
         </div>
       </div>
+
+      {/* Slot Limit Alert */}
+      {isSlotLimitReached && paymentStatus === "paid" && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800 flex items-center justify-between">
+            <span>
+              <strong>Slot Gratis Penuh:</strong> Anda telah menggunakan {FREE_SLOT_LIMIT} slot gratis.
+            </span>
+            <Button size="sm" variant="outline" className="ml-4 border-amber-300 text-amber-700 hover:bg-amber-100" disabled>
+              <Lock className="h-3 w-3 mr-1" />
+              Beli Slot Tambahan (Coming Soon)
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Payment Warning */}
       {paymentStatus === "unpaid" && (

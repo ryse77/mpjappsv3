@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Calendar, Award, User, Bell, ChevronLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,12 +24,21 @@ const navItems = [
 
 const CrewDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { signOut } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("beranda");
   const [institutionPaid, setInstitutionPaid] = useState(true);
 
+  // Support debug mode via location.state
+  const debugCrew = (location.state as any)?.debugCrew;
+  const isDebugMode = (location.state as any)?.isDebugMode;
+
   const handleLogout = async () => {
+    if (isDebugMode) {
+      navigate('/debug-view');
+      return;
+    }
     await signOut();
     toast({
       title: "Berhasil keluar",
