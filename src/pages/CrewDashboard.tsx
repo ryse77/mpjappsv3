@@ -50,7 +50,7 @@ const CrewDashboard = () => {
   const renderContent = () => {
     switch (activeView) {
       case "beranda":
-        return <CrewBerandaPage onNavigate={setActiveView} />;
+        return <CrewBerandaPage onNavigate={setActiveView} debugCrew={debugCrew} />;
       case "event":
         return <CrewEventPage />;
       case "sertifikat":
