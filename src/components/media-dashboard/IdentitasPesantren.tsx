@@ -39,6 +39,9 @@ import {
   IdCard
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { VirtualCharter } from "@/components/shared/VirtualCharter";
+import { PhysicalCharter } from "@/components/shared/PhysicalCharter";
+import { formatNIP } from "@/lib/id-utils";
 
 interface IdentitasPesantrenProps {
   paymentStatus: "paid" | "unpaid";
@@ -326,107 +329,93 @@ const IdentitasPesantren = ({
 
         {/* Tab 2: Piagam & Aset Digital */}
         <TabsContent value="piagam" className="space-y-6">
-          {/* Section 1: Piagam Keanggotaan */}
+          {/* Section 1: Virtual Charter (YouTube Play Button Style) */}
           <div>
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">Piagam Keanggotaan (Lembaga)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Virtual Plaque */}
-              <Card className="overflow-hidden">
-                <CardHeader className="bg-gradient-to-br from-slate-100 to-slate-200 pb-4">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Award className="h-5 w-5 text-[#f59e0b]" />
-                    Virtual Plaque (A4 Portrait)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {/* Plaque Preview */}
-                  <div className={`aspect-[3/4] relative ${
-                    profileLevel === "gold" || profileLevel === "platinum"
-                      ? "bg-gradient-to-br from-[#f59e0b] via-amber-400 to-yellow-300"
-                      : profileLevel === "silver"
-                        ? "bg-gradient-to-br from-slate-400 via-slate-300 to-slate-200"
-                        : "bg-gradient-to-br from-slate-300 to-slate-200"
-                  }`}>
-                    {/* 3D Embossed Effect */}
-                    <div className="absolute inset-4 bg-white/90 rounded-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.1),_0_4px_12px_rgba(0,0,0,0.15)] flex flex-col items-center justify-center p-6 text-center">
-                      <div className="h-16 w-16 bg-[#166534] rounded-full flex items-center justify-center mb-4 shadow-lg">
-                        <Award className="h-8 w-8 text-white" />
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-800 mb-1">PIAGAM KEANGGOTAAN</h3>
-                      <p className="text-sm text-slate-600 mb-4">Media Pondok Jawa Timur</p>
-                      <div className="border-t border-b border-slate-300 py-3 my-2 w-full">
-                        <p className="font-semibold text-slate-800">{formData.namaPesantren}</p>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-2">
-                        Level: {profileLevel.charAt(0).toUpperCase() + profileLevel.slice(1)}
-                      </p>
-                    </div>
-                    {profileLevel === "basic" && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <div className="text-center text-white">
-                          <Lock className="h-10 w-10 mx-auto mb-2" />
-                          <p className="text-sm">Lengkapi Step 1</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+            <h2 className="text-lg font-semibold text-slate-800 mb-2">Piagam Virtual (YouTube Style)</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Piagam digital dengan efek timbul sesuai level keanggotaan
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Silver Charter */}
+              <div className="space-y-2">
+                <Badge className="bg-slate-400 text-white">Silver - Lunas Administrasi</Badge>
+                <VirtualCharter
+                  level="silver"
+                  noId={debugProfile?.nip || "2601001"}
+                  namaMedia={formData.namaPesantren}
+                  alamat={formData.alamat}
+                  className={profileLevel === "basic" ? "opacity-50" : ""}
+                />
+              </div>
+              
+              {/* Gold Charter */}
+              <div className="space-y-2">
+                <Badge className="bg-amber-500 text-white">Gold - Profil Lengkap</Badge>
+                <VirtualCharter
+                  level="gold"
+                  noId={debugProfile?.nip || "2601001"}
+                  namaMedia={formData.namaPesantren}
+                  alamat={formData.alamat}
+                  className={profileLevel !== "gold" && profileLevel !== "platinum" ? "opacity-50" : ""}
+                />
+              </div>
+              
+              {/* Platinum Charter */}
+              <div className="space-y-2">
+                <Badge className="bg-cyan-600 text-white">Platinum - Full Verified</Badge>
+                <VirtualCharter
+                  level="platinum"
+                  noId={debugProfile?.nip || "2601001"}
+                  namaMedia={formData.namaPesantren}
+                  alamat={formData.alamat}
+                  className={profileLevel !== "platinum" ? "opacity-50" : ""}
+                />
+              </div>
+            </div>
+          </div>
 
-              {/* Legal Certificate */}
-              <Card className="overflow-hidden">
-                <CardHeader className="bg-gradient-to-br from-slate-100 to-slate-200 pb-4">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Award className="h-5 w-5 text-[#166534]" />
-                    Sertifikat Resmi (A4 Landscape)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {/* Certificate Preview */}
-                  <div className="aspect-[4/3] bg-white relative border-8 border-double border-[#166534]">
-                    <div className="absolute inset-4 flex flex-col items-center justify-center text-center p-4">
-                      <p className="text-xs text-slate-500 mb-2 font-serif">MEDIA PONDOK JAWA TIMUR</p>
-                      <h3 className="text-lg font-bold text-slate-800 mb-1 font-serif">SERTIFIKAT KEANGGOTAAN</h3>
-                      <div className="h-0.5 w-24 bg-[#f59e0b] my-3"></div>
-                      <p className="text-sm text-slate-600 mb-2">Diberikan kepada:</p>
-                      <p className="font-bold text-[#166534] text-lg font-serif">{formData.namaPesantren}</p>
-                      <p className="text-xs text-slate-500 mt-4">Sebagai anggota resmi</p>
-                      <div className="mt-6 flex gap-12">
-                        <div className="text-center">
-                          <div className="w-16 border-b border-slate-400 mb-1"></div>
-                          <p className="text-xs text-slate-500">Ketua Umum</p>
-                        </div>
-                        <div className="text-center">
-                          <div className="w-16 border-b border-slate-400 mb-1"></div>
-                          <p className="text-xs text-slate-500">Sekretaris</p>
-                        </div>
-                      </div>
-                    </div>
+          {/* Section 2: Physical Charter (Classic A4 Landscape) */}
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800 mb-2">Sertifikat Resmi (A4 Landscape)</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Piagam klasik untuk dicetak oleh Admin Pusat
+            </p>
+            <div className="max-w-2xl mx-auto relative">
+              <PhysicalCharter
+                noId={debugProfile?.nip || "2601001"}
+                namaMedia={formData.namaPesantren}
+                alamat={formData.alamat}
+              />
+              {!canDownloadCertificate && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                  <div className="text-center text-white">
+                    <Lock className="h-10 w-10 mx-auto mb-2" />
+                    <p className="text-sm">Lengkapi Profil (Gold) & Lunasi Tagihan</p>
                   </div>
-                  <div className="p-4">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            <Button 
-                              className="w-full bg-[#166534] hover:bg-[#14532d]"
-                              disabled={!canDownloadCertificate}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Download PDF Resmi
-                            </Button>
-                          </span>
-                        </TooltipTrigger>
-                        {!canDownloadCertificate && (
-                          <TooltipContent>
-                            <p>Lengkapi Data (Gold) & Lunasi Tagihan</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              )}
+            </div>
+            <div className="max-w-2xl mx-auto mt-4">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="block">
+                      <Button 
+                        className="w-full bg-[#166534] hover:bg-[#14532d]"
+                        disabled={!canDownloadCertificate}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download PDF Resmi
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!canDownloadCertificate && (
+                    <TooltipContent>
+                      <p>Lengkapi Data (Gold) & Lunasi Tagihan</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
