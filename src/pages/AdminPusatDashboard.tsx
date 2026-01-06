@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { 
   LayoutDashboard, 
-  CheckCircle,
   Database,
   Calendar,
   Medal,
@@ -14,53 +13,50 @@ import {
   X,
   Zap,
   Map,
-  Wallet
+  ClipboardCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminPusatHome from "@/components/admin-pusat/AdminPusatHome";
-import AdminPusatVerifikasi from "@/components/admin-pusat/AdminPusatVerifikasi";
 import AdminPusatMasterData from "@/components/admin-pusat/AdminPusatMasterData";
-import AdminPusatEvent from "@/components/admin-pusat/AdminPusatEvent";
-import AdminPusatMilitansi from "@/components/admin-pusat/AdminPusatMilitansi";
-import AdminPusatHub from "@/components/admin-pusat/AdminPusatHub";
-import AdminPusatPengaturan from "@/components/admin-pusat/AdminPusatPengaturan";
-import AdminPusatKeuangan from "@/components/admin-pusat/AdminPusatKeuangan";
+import AdminPusatAdministrasi from "@/components/admin-pusat/AdminPusatAdministrasi";
 import AdminPusatRegional from "@/components/admin-pusat/AdminPusatRegional";
+import AdminPusatPengaturan from "@/components/admin-pusat/AdminPusatPengaturan";
 import GlobalSearchNIPNIAM from "@/components/admin-pusat/GlobalSearchNIPNIAM";
+import ComingSoonOverlay from "@/components/shared/ComingSoonOverlay";
 
 // Super Admin email check
 const SUPER_ADMIN_EMAIL = "superadmin@mpj.com";
 
 type ViewType = 
   | "dashboard" 
-  | "verifikasi" 
+  | "administrasi"
   | "master-data" 
+  | "master-regional"
   | "manajemen-event"
   | "manajemen-militansi" 
   | "mpj-hub"
-  | "pengaturan"
-  | "keuangan"
-  | "manajemen-regional";
+  | "pengaturan";
 
 interface MenuItem {
   id: ViewType;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
+  soon?: boolean;
 }
 
 const menuItems: MenuItem[] = [
-  { id: "dashboard", label: "DASHBOARD BERANDA", icon: LayoutDashboard },
-  { id: "verifikasi", label: "VERIFIKASI", icon: CheckCircle, badge: 6 },
-  { id: "keuangan", label: "ADMINISTRASI KEUANGAN", icon: Wallet },
+  { id: "dashboard", label: "BERANDA", icon: LayoutDashboard },
+  { id: "administrasi", label: "ADMINISTRASI", icon: ClipboardCheck },
   { id: "master-data", label: "MASTER DATA", icon: Database },
-  { id: "manajemen-regional", label: "MANAJEMEN REGIONAL", icon: Map },
-  { id: "manajemen-event", label: "MANAJEMEN EVENT", icon: Calendar },
-  { id: "manajemen-militansi", label: "MANAJEMEN MILITANSI", icon: Medal },
-  { id: "mpj-hub", label: "MPJ-HUB", icon: Layers },
+  { id: "master-regional", label: "MASTER REGIONAL", icon: Map },
+  { id: "manajemen-event", label: "MANAJEMEN EVENT", icon: Calendar, soon: true },
+  { id: "manajemen-militansi", label: "MANAJEMEN MILITANSI", icon: Medal, soon: true },
+  { id: "mpj-hub", label: "MPJ HUB", icon: Layers, soon: true },
   { id: "pengaturan", label: "PENGATURAN", icon: Settings },
 ];
 
@@ -86,20 +82,18 @@ const Dashboard = () => {
     switch (activeView) {
       case "dashboard":
         return <AdminPusatHome onNavigate={setActiveView} />;
-      case "verifikasi":
-        return <AdminPusatVerifikasi />;
-      case "keuangan":
-        return <AdminPusatKeuangan />;
+      case "administrasi":
+        return <AdminPusatAdministrasi />;
       case "master-data":
         return <AdminPusatMasterData />;
-      case "manajemen-regional":
+      case "master-regional":
         return <AdminPusatRegional />;
       case "manajemen-event":
-        return <AdminPusatEvent />;
+        return <ComingSoonOverlay title="Manajemen Event" description="Kelola event dan kegiatan pesantren se-Jawa Timur" />;
       case "manajemen-militansi":
-        return <AdminPusatMilitansi />;
+        return <ComingSoonOverlay title="Manajemen Militansi" description="Leaderboard dan sistem gamifikasi XP" />;
       case "mpj-hub":
-        return <AdminPusatHub />;
+        return <ComingSoonOverlay title="MPJ HUB" description="Pusat kolaborasi dan resource sharing" />;
       case "pengaturan":
         return <AdminPusatPengaturan />;
       default:
@@ -107,13 +101,13 @@ const Dashboard = () => {
     }
   };
 
-  const handleMenuClick = (viewId: ViewType) => {
-    setActiveView(viewId);
+  const handleMenuClick = (item: MenuItem) => {
+    setActiveView(item.id);
     setMobileSidebarOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Mobile Overlay */}
       {mobileSidebarOpen && (
         <div 
@@ -158,22 +152,29 @@ const Dashboard = () => {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => handleMenuClick(item.id)}
+              onClick={() => handleMenuClick(item)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200",
                 activeView === item.id
-                  ? "bg-[#f59e0b] text-slate-900 font-semibold"
+                  ? "bg-amber-500 text-slate-900 font-semibold"
                   : "text-white hover:bg-emerald-600"
               )}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
               {sidebarOpen && (
-                <span className="flex-1 text-left text-sm">{item.label}</span>
-              )}
-              {sidebarOpen && item.badge && (
-                <span className="bg-red-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-                  {item.badge}
-                </span>
+                <>
+                  <span className="flex-1 text-left text-sm">{item.label}</span>
+                  {item.soon && (
+                    <Badge variant="outline" className="text-[10px] border-emerald-400 text-emerald-200">
+                      Soon
+                    </Badge>
+                  )}
+                  {item.badge && (
+                    <span className="bg-red-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </>
               )}
             </button>
           ))}
@@ -209,17 +210,17 @@ const Dashboard = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
+        <header className="h-16 bg-background border-b flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden text-slate-600 hover:text-slate-800"
+              className="lg:hidden"
               onClick={() => setMobileSidebarOpen(true)}
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-foreground hidden sm:block">
               Dashboard Admin Pusat
             </h2>
           </div>
@@ -228,11 +229,11 @@ const Dashboard = () => {
             <div className="hidden lg:block w-80">
               <GlobalSearchNIPNIAM />
             </div>
-            <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-slate-700">
+            <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full" />
             </Button>
-            <div className="w-9 h-9 rounded-full bg-[#166534] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-full bg-emerald-600 flex items-center justify-center">
               <span className="text-sm font-semibold text-white">AP</span>
             </div>
           </div>
