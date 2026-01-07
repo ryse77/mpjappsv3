@@ -120,63 +120,109 @@ export interface MockAdminProfile {
   nama_media?: string | null;
 }
 
-// ============= REGIONS =============
+// ============= REGIONS (Sesuai permintaan) =============
 export const MOCK_REGIONS: MockRegion[] = [
-  { id: 'malang-id', name: 'Malang Raya', code: '01' },
-  { id: 'kediri-id', name: 'Kediri Raya', code: '02' },
-  { id: 'jombang-id', name: 'Jombang', code: '07' },
-  { id: 'probolinggo-id', name: 'Probolinggo', code: '10' },
+  { id: 'reg-01', name: 'Malang Raya', code: '01' },
+  { id: 'reg-02', name: 'Kediri Raya', code: '02' },
+  { id: 'reg-03', name: 'Jombang & Sekitarnya', code: '03' },
+  { id: 'reg-04', name: 'Probolinggo', code: '10' },
+];
+
+// ============= CITIES (Mapping Kota/Kabupaten Jawa Timur) =============
+export interface MockCity {
+  id: string;
+  name: string;
+  region_id: string | null;
+}
+
+export const MOCK_CITIES: MockCity[] = [
+  // Mapped to Malang Raya (reg-01)
+  { id: 'cit-01', name: 'Kota Malang', region_id: 'reg-01' },
+  { id: 'cit-02', name: 'Kab. Malang', region_id: 'reg-01' },
+  { id: 'cit-03', name: 'Kota Batu', region_id: 'reg-01' },
+  // Mapped to Kediri Raya (reg-02)
+  { id: 'cit-04', name: 'Kota Kediri', region_id: 'reg-02' },
+  { id: 'cit-05', name: 'Kab. Kediri', region_id: 'reg-02' },
+  // Mapped to Jombang & Sekitarnya (reg-03)
+  { id: 'cit-06', name: 'Kab. Jombang', region_id: 'reg-03' },
+  // Unmapped cities (available for new mapping)
+  { id: 'cit-07', name: 'Kota Surabaya', region_id: null },
+  { id: 'cit-08', name: 'Kab. Sidoarjo', region_id: null },
+  { id: 'cit-09', name: 'Kab. Gresik', region_id: null },
+  { id: 'cit-10', name: 'Kab. Lamongan', region_id: null },
+  { id: 'cit-11', name: 'Kab. Tuban', region_id: null },
+  { id: 'cit-12', name: 'Kab. Bojonegoro', region_id: null },
+  { id: 'cit-13', name: 'Kab. Nganjuk', region_id: null },
+  { id: 'cit-14', name: 'Kab. Madiun', region_id: null },
+  { id: 'cit-15', name: 'Kab. Ponorogo', region_id: null },
+  { id: 'cit-16', name: 'Kab. Pacitan', region_id: null },
+  { id: 'cit-17', name: 'Kab. Blitar', region_id: null },
+  { id: 'cit-18', name: 'Kab. Tulungagung', region_id: null },
+  { id: 'cit-19', name: 'Kab. Trenggalek', region_id: null },
+  { id: 'cit-20', name: 'Kab. Lumajang', region_id: null },
+  { id: 'cit-21', name: 'Kab. Pasuruan', region_id: null },
+  { id: 'cit-22', name: 'Kab. Mojokerto', region_id: null },
+  { id: 'cit-23', name: 'Kab. Probolinggo', region_id: 'reg-04' },
+  { id: 'cit-24', name: 'Kota Probolinggo', region_id: 'reg-04' },
+  { id: 'cit-25', name: 'Kab. Bondowoso', region_id: null },
+  { id: 'cit-26', name: 'Kab. Situbondo', region_id: null },
+  { id: 'cit-27', name: 'Kab. Jember', region_id: null },
+  { id: 'cit-28', name: 'Kab. Banyuwangi', region_id: null },
+  { id: 'cit-29', name: 'Kab. Bangkalan', region_id: null },
+  { id: 'cit-30', name: 'Kab. Sampang', region_id: null },
+  { id: 'cit-31', name: 'Kab. Pamekasan', region_id: null },
+  { id: 'cit-32', name: 'Kab. Sumenep', region_id: null },
 ];
 
 // ============= PESANTREN (10 entries from 4 regions) =============
 export const MOCK_PESANTREN: MockPesantren[] = [
-  // Malang (01) - 3 entries
-  { id: 'p1', nama_pesantren: 'PP Al-Hikmah Singosari', nip: '2601001', region_id: 'malang-id', region_name: 'Malang Raya', city_name: 'Kota Malang', status_account: 'active', status_payment: 'paid', profile_level: 'platinum', nama_pengasuh: 'KH. Ahmad Fauzi', nama_media: 'Media Al-Hikmah TV', alamat_singkat: 'Jl. Raya Singosari No. 123', jumlah_santri: 250, sejarah: 'Didirikan tahun 1980', visi_misi: 'Mencetak generasi Qurani', logo_url: '/placeholder.svg', foto_pengasuh_url: '/placeholder.svg', latitude: -7.9666, longitude: 112.6326 },
-  { id: 'p2', nama_pesantren: 'PP Nurul Huda Kepanjen', nip: '2601002', region_id: 'malang-id', region_name: 'Malang Raya', city_name: 'Kab. Malang', status_account: 'active', status_payment: 'paid', profile_level: 'gold', nama_pengasuh: 'KH. Zainuddin', nama_media: 'Media Nurul Huda' },
-  { id: 'p3', nama_pesantren: 'PP Darul Ulum Pakis', nip: null, region_id: 'malang-id', region_name: 'Malang Raya', city_name: 'Kab. Malang', status_account: 'pending', status_payment: 'unpaid', profile_level: 'silver', nama_pengasuh: 'Nyai Hj. Fatimah', nama_media: 'Media Darul Ulum' },
-  // Kediri (02) - 2 entries
-  { id: 'p4', nama_pesantren: 'PP Lirboyo', nip: '2602001', region_id: 'kediri-id', region_name: 'Kediri Raya', city_name: 'Kota Kediri', status_account: 'active', status_payment: 'paid', profile_level: 'platinum', nama_pengasuh: 'KH. Anwar Mansur', nama_media: 'Media Lirboyo' },
-  { id: 'p5', nama_pesantren: 'PP Al-Falah Ploso', nip: '2602002', region_id: 'kediri-id', region_name: 'Kediri Raya', city_name: 'Kab. Kediri', status_account: 'active', status_payment: 'paid', profile_level: 'gold', nama_pengasuh: 'KH. Misbahul Munir', nama_media: 'Media Al-Falah' },
-  // Jombang (07) - 3 entries
-  { id: 'p6', nama_pesantren: 'PP Tebuireng', nip: '2607001', region_id: 'jombang-id', region_name: 'Jombang', city_name: 'Jombang', status_account: 'active', status_payment: 'paid', profile_level: 'platinum', nama_pengasuh: 'KH. Abdul Hakim', nama_media: 'Media Tebuireng' },
-  { id: 'p7', nama_pesantren: 'PP Darul Ulum Rejoso', nip: '2607002', region_id: 'jombang-id', region_name: 'Jombang', city_name: 'Jombang', status_account: 'active', status_payment: 'paid', profile_level: 'gold', nama_pengasuh: 'KH. Tamim Romli', nama_media: 'Media Darul Ulum Rejoso' },
-  { id: 'p8', nama_pesantren: 'PP Bahrul Ulum Tambakberas', nip: '2607003', region_id: 'jombang-id', region_name: 'Jombang', city_name: 'Jombang', status_account: 'active', status_payment: 'paid', profile_level: 'silver', nama_pengasuh: 'KH. Syaiful Bahri', nama_media: 'Media Bahrul Ulum' },
-  // Probolinggo (10) - 2 entries
-  { id: 'p9', nama_pesantren: 'PP Nurul Jadid Paiton', nip: '2610001', region_id: 'probolinggo-id', region_name: 'Probolinggo', city_name: 'Probolinggo', status_account: 'active', status_payment: 'paid', profile_level: 'platinum', nama_pengasuh: 'KH. Zaini', nama_media: 'Media Nurul Jadid' },
-  { id: 'p10', nama_pesantren: 'PP Zainul Hasan Genggong', nip: '2610002', region_id: 'probolinggo-id', region_name: 'Probolinggo', city_name: 'Probolinggo', status_account: 'active', status_payment: 'paid', profile_level: 'gold', nama_pengasuh: 'KH. Hasan', nama_media: 'Media Zainul Hasan' },
+  // Malang Raya (reg-01) - 3 entries
+  { id: 'p1', nama_pesantren: 'PP Al-Hikmah Singosari', nip: '2601001', region_id: 'reg-01', region_name: 'Malang Raya', city_name: 'Kota Malang', status_account: 'active', status_payment: 'paid', profile_level: 'platinum', nama_pengasuh: 'KH. Ahmad Fauzi', nama_media: 'Media Al-Hikmah TV', alamat_singkat: 'Jl. Raya Singosari No. 123', jumlah_santri: 250, sejarah: 'Didirikan tahun 1980', visi_misi: 'Mencetak generasi Qurani', logo_url: '/placeholder.svg', foto_pengasuh_url: '/placeholder.svg', latitude: -7.9666, longitude: 112.6326 },
+  { id: 'p2', nama_pesantren: 'PP Nurul Huda Kepanjen', nip: '2601002', region_id: 'reg-01', region_name: 'Malang Raya', city_name: 'Kab. Malang', status_account: 'active', status_payment: 'paid', profile_level: 'gold', nama_pengasuh: 'KH. Zainuddin', nama_media: 'Media Nurul Huda' },
+  { id: 'p3', nama_pesantren: 'PP Darul Ulum Pakis', nip: null, region_id: 'reg-01', region_name: 'Malang Raya', city_name: 'Kab. Malang', status_account: 'pending', status_payment: 'unpaid', profile_level: 'silver', nama_pengasuh: 'Nyai Hj. Fatimah', nama_media: 'Media Darul Ulum' },
+  // Kediri Raya (reg-02) - 2 entries
+  { id: 'p4', nama_pesantren: 'PP Lirboyo', nip: '2602001', region_id: 'reg-02', region_name: 'Kediri Raya', city_name: 'Kota Kediri', status_account: 'active', status_payment: 'paid', profile_level: 'platinum', nama_pengasuh: 'KH. Anwar Mansur', nama_media: 'Media Lirboyo' },
+  { id: 'p5', nama_pesantren: 'PP Al-Falah Ploso', nip: '2602002', region_id: 'reg-02', region_name: 'Kediri Raya', city_name: 'Kab. Kediri', status_account: 'active', status_payment: 'paid', profile_level: 'gold', nama_pengasuh: 'KH. Misbahul Munir', nama_media: 'Media Al-Falah' },
+  // Jombang & Sekitarnya (reg-03) - 3 entries
+  { id: 'p6', nama_pesantren: 'PP Tebuireng', nip: '2603001', region_id: 'reg-03', region_name: 'Jombang & Sekitarnya', city_name: 'Kab. Jombang', status_account: 'active', status_payment: 'paid', profile_level: 'platinum', nama_pengasuh: 'KH. Abdul Hakim', nama_media: 'Media Tebuireng' },
+  { id: 'p7', nama_pesantren: 'PP Darul Ulum Rejoso', nip: '2603002', region_id: 'reg-03', region_name: 'Jombang & Sekitarnya', city_name: 'Kab. Jombang', status_account: 'active', status_payment: 'paid', profile_level: 'gold', nama_pengasuh: 'KH. Tamim Romli', nama_media: 'Media Darul Ulum Rejoso' },
+  { id: 'p8', nama_pesantren: 'PP Bahrul Ulum Tambakberas', nip: '2603003', region_id: 'reg-03', region_name: 'Jombang & Sekitarnya', city_name: 'Kab. Jombang', status_account: 'active', status_payment: 'paid', profile_level: 'silver', nama_pengasuh: 'KH. Syaiful Bahri', nama_media: 'Media Bahrul Ulum' },
+  // Probolinggo (reg-04) - 2 entries
+  { id: 'p9', nama_pesantren: 'PP Nurul Jadid Paiton', nip: '2610001', region_id: 'reg-04', region_name: 'Probolinggo', city_name: 'Kab. Probolinggo', status_account: 'active', status_payment: 'paid', profile_level: 'platinum', nama_pengasuh: 'KH. Zaini', nama_media: 'Media Nurul Jadid' },
+  { id: 'p10', nama_pesantren: 'PP Zainul Hasan Genggong', nip: '2610002', region_id: 'reg-04', region_name: 'Probolinggo', city_name: 'Kab. Probolinggo', status_account: 'active', status_payment: 'paid', profile_level: 'gold', nama_pengasuh: 'KH. Hasan', nama_media: 'Media Zainul Hasan' },
 ];
 
 // ============= CREWS (10 entries from multiple pesantren) =============
 export const MOCK_CREWS: MockCrew[] = [
-  // Malang
-  { id: 'c1', nama: 'Ahmad Rizky', niam: 'AN260100101', jabatan: 'Videografer', profile_id: 'p1', pesantren_name: 'PP Al-Hikmah Singosari', region_id: 'malang-id', region_name: 'Malang Raya', xp_level: 1500, skill: ['Videografi'] },
-  { id: 'c2', nama: 'Budi Santoso', niam: 'AN260100102', jabatan: 'Editor', profile_id: 'p1', pesantren_name: 'PP Al-Hikmah Singosari', region_id: 'malang-id', region_name: 'Malang Raya', xp_level: 2500, skill: ['Editing'] },
-  { id: 'c3', nama: 'Siti Aminah', niam: 'AN260100201', jabatan: 'Admin', profile_id: 'p2', pesantren_name: 'PP Nurul Huda Kepanjen', region_id: 'malang-id', region_name: 'Malang Raya', xp_level: 800, skill: ['Administrasi'] },
-  // Kediri
-  { id: 'c4', nama: 'Dewi Kartika', niam: 'AN260200101', jabatan: 'Admin Media', profile_id: 'p4', pesantren_name: 'PP Lirboyo', region_id: 'kediri-id', region_name: 'Kediri Raya', xp_level: 3500, skill: ['Social Media'] },
-  { id: 'c5', nama: 'Rudi Hartono', niam: 'AN260200102', jabatan: 'Fotografer', profile_id: 'p4', pesantren_name: 'PP Lirboyo', region_id: 'kediri-id', region_name: 'Kediri Raya', xp_level: 1200, skill: ['Fotografi'] },
-  // Jombang
-  { id: 'c6', nama: 'Eko Prasetyo', niam: 'AN260700101', jabatan: 'Videografer', profile_id: 'p6', pesantren_name: 'PP Tebuireng', region_id: 'jombang-id', region_name: 'Jombang', xp_level: 4800, skill: ['Videografi'] },
-  { id: 'c7', nama: 'Nur Hidayah', niam: 'AN260700102', jabatan: 'Desainer', profile_id: 'p6', pesantren_name: 'PP Tebuireng', region_id: 'jombang-id', region_name: 'Jombang', xp_level: 950, skill: ['Desain Grafis'] },
-  { id: 'c8', nama: 'Hadi Wijaya', niam: 'AN260700201', jabatan: 'Editor', profile_id: 'p7', pesantren_name: 'PP Darul Ulum Rejoso', region_id: 'jombang-id', region_name: 'Jombang', xp_level: 2100, skill: ['Editing'] },
+  // Malang Raya
+  { id: 'c1', nama: 'Ahmad Rizky', niam: 'AN260100101', jabatan: 'Videografer', profile_id: 'p1', pesantren_name: 'PP Al-Hikmah Singosari', region_id: 'reg-01', region_name: 'Malang Raya', xp_level: 1500, skill: ['Videografi'] },
+  { id: 'c2', nama: 'Budi Santoso', niam: 'AN260100102', jabatan: 'Editor', profile_id: 'p1', pesantren_name: 'PP Al-Hikmah Singosari', region_id: 'reg-01', region_name: 'Malang Raya', xp_level: 2500, skill: ['Editing'] },
+  { id: 'c3', nama: 'Siti Aminah', niam: 'AN260100201', jabatan: 'Admin', profile_id: 'p2', pesantren_name: 'PP Nurul Huda Kepanjen', region_id: 'reg-01', region_name: 'Malang Raya', xp_level: 800, skill: ['Administrasi'] },
+  // Kediri Raya
+  { id: 'c4', nama: 'Dewi Kartika', niam: 'AN260200101', jabatan: 'Admin Media', profile_id: 'p4', pesantren_name: 'PP Lirboyo', region_id: 'reg-02', region_name: 'Kediri Raya', xp_level: 3500, skill: ['Social Media'] },
+  { id: 'c5', nama: 'Rudi Hartono', niam: 'AN260200102', jabatan: 'Fotografer', profile_id: 'p4', pesantren_name: 'PP Lirboyo', region_id: 'reg-02', region_name: 'Kediri Raya', xp_level: 1200, skill: ['Fotografi'] },
+  // Jombang & Sekitarnya
+  { id: 'c6', nama: 'Eko Prasetyo', niam: 'AN260300101', jabatan: 'Videografer', profile_id: 'p6', pesantren_name: 'PP Tebuireng', region_id: 'reg-03', region_name: 'Jombang & Sekitarnya', xp_level: 4800, skill: ['Videografi'] },
+  { id: 'c7', nama: 'Nur Hidayah', niam: 'AN260300102', jabatan: 'Desainer', profile_id: 'p6', pesantren_name: 'PP Tebuireng', region_id: 'reg-03', region_name: 'Jombang & Sekitarnya', xp_level: 950, skill: ['Desain Grafis'] },
+  { id: 'c8', nama: 'Hadi Wijaya', niam: 'AN260300201', jabatan: 'Editor', profile_id: 'p7', pesantren_name: 'PP Darul Ulum Rejoso', region_id: 'reg-03', region_name: 'Jombang & Sekitarnya', xp_level: 2100, skill: ['Editing'] },
   // Probolinggo
-  { id: 'c9', nama: 'Fatimah Zahra', niam: 'AN261000101', jabatan: 'Penulis', profile_id: 'p9', pesantren_name: 'PP Nurul Jadid Paiton', region_id: 'probolinggo-id', region_name: 'Probolinggo', xp_level: 6200, skill: ['Penulisan'] },
-  { id: 'c10', nama: 'Ali Mahmud', niam: 'AN261000102', jabatan: 'Videografer', profile_id: 'p9', pesantren_name: 'PP Nurul Jadid Paiton', region_id: 'probolinggo-id', region_name: 'Probolinggo', xp_level: 1800, skill: ['Videografi'] },
+  { id: 'c9', nama: 'Fatimah Zahra', niam: 'AN261000101', jabatan: 'Penulis', profile_id: 'p9', pesantren_name: 'PP Nurul Jadid Paiton', region_id: 'reg-04', region_name: 'Probolinggo', xp_level: 6200, skill: ['Penulisan'] },
+  { id: 'c10', nama: 'Ali Mahmud', niam: 'AN261000102', jabatan: 'Videografer', profile_id: 'p9', pesantren_name: 'PP Nurul Jadid Paiton', region_id: 'reg-04', region_name: 'Probolinggo', xp_level: 1800, skill: ['Videografi'] },
 ];
 
 // ============= CLAIMS (Pending & Regional Approved) =============
 export const MOCK_CLAIMS: MockClaim[] = [
   // Pending claims (for Regional validation)
-  { id: 'claim-1', user_id: 'u1', pesantren_name: 'PP Baru Malang', status: 'pending', region_id: 'malang-id', region_name: 'Malang Raya', kecamatan: 'Singosari', nama_pengelola: 'Ahmad Supriyadi', email_pengelola: 'ahmad@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=SK+Pesantren', notes: null, claimed_at: '2026-01-05T08:00:00Z', created_at: '2026-01-05T08:00:00Z', jenis_pengajuan: 'pesantren_baru', nama_pengasuh: 'KH. Ahmad Supriyadi', alamat_singkat: 'Jl. Raya Singosari', no_wa_pendaftar: '081234567890' },
-  { id: 'claim-2', user_id: 'u2', pesantren_name: 'PP Al-Muttaqin', status: 'pending', region_id: 'kediri-id', region_name: 'Kediri Raya', kecamatan: 'Pare', nama_pengelola: 'Hj. Siti Khadijah', email_pengelola: 'siti@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Surat+Tugas', notes: null, claimed_at: '2026-01-04T10:00:00Z', created_at: '2026-01-04T10:00:00Z', jenis_pengajuan: 'klaim', nama_pengasuh: 'KH. Abdullah', no_wa_pendaftar: '081234567891' },
-  { id: 'claim-3', user_id: 'u3', pesantren_name: 'PP Riyadlul Ulum', status: 'pending', region_id: 'jombang-id', region_name: 'Jombang', kecamatan: 'Peterongan', nama_pengelola: 'KH. Zainal Abidin', email_pengelola: 'zainal@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Dokumen', notes: null, claimed_at: '2026-01-03T09:00:00Z', created_at: '2026-01-03T09:00:00Z', jenis_pengajuan: 'pesantren_baru' },
-  { id: 'claim-4', user_id: 'u4', pesantren_name: 'PP Salafiyah Syafiiyah', status: 'pending', region_id: 'probolinggo-id', region_name: 'Probolinggo', kecamatan: 'Kraksaan', nama_pengelola: 'Nyai Hj. Aisyah', email_pengelola: 'aisyah@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Surat+Keterangan', notes: null, claimed_at: '2026-01-02T14:00:00Z', created_at: '2026-01-02T14:00:00Z', jenis_pengajuan: 'klaim' },
+  { id: 'claim-1', user_id: 'u1', pesantren_name: 'PP Baru Malang', status: 'pending', region_id: 'reg-01', region_name: 'Malang Raya', kecamatan: 'Singosari', nama_pengelola: 'Ahmad Supriyadi', email_pengelola: 'ahmad@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=SK+Pesantren', notes: null, claimed_at: '2026-01-05T08:00:00Z', created_at: '2026-01-05T08:00:00Z', jenis_pengajuan: 'pesantren_baru', nama_pengasuh: 'KH. Ahmad Supriyadi', alamat_singkat: 'Jl. Raya Singosari', no_wa_pendaftar: '081234567890' },
+  { id: 'claim-2', user_id: 'u2', pesantren_name: 'PP Al-Muttaqin', status: 'pending', region_id: 'reg-02', region_name: 'Kediri Raya', kecamatan: 'Pare', nama_pengelola: 'Hj. Siti Khadijah', email_pengelola: 'siti@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Surat+Tugas', notes: null, claimed_at: '2026-01-04T10:00:00Z', created_at: '2026-01-04T10:00:00Z', jenis_pengajuan: 'klaim', nama_pengasuh: 'KH. Abdullah', no_wa_pendaftar: '081234567891' },
+  { id: 'claim-3', user_id: 'u3', pesantren_name: 'PP Riyadlul Ulum', status: 'pending', region_id: 'reg-03', region_name: 'Jombang & Sekitarnya', kecamatan: 'Peterongan', nama_pengelola: 'KH. Zainal Abidin', email_pengelola: 'zainal@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Dokumen', notes: null, claimed_at: '2026-01-03T09:00:00Z', created_at: '2026-01-03T09:00:00Z', jenis_pengajuan: 'pesantren_baru' },
+  { id: 'claim-4', user_id: 'u4', pesantren_name: 'PP Salafiyah Syafiiyah', status: 'pending', region_id: 'reg-04', region_name: 'Probolinggo', kecamatan: 'Kraksaan', nama_pengelola: 'Nyai Hj. Aisyah', email_pengelola: 'aisyah@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Surat+Keterangan', notes: null, claimed_at: '2026-01-02T14:00:00Z', created_at: '2026-01-02T14:00:00Z', jenis_pengajuan: 'klaim' },
   // Regional approved (waiting for payment)
-  { id: 'claim-10', user_id: 'u10', pesantren_name: 'PP Bustanul Ulum', status: 'regional_approved', region_id: 'malang-id', region_name: 'Malang Raya', kecamatan: 'Lawang', nama_pengelola: 'KH. Hasyim Asyari', email_pengelola: 'hasyim@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Approved', notes: null, claimed_at: '2026-01-04T08:00:00Z', created_at: '2026-01-04T08:00:00Z', jenis_pengajuan: 'pesantren_baru' },
-  { id: 'claim-11', user_id: 'u11', pesantren_name: 'PP Al-Hidayah', status: 'regional_approved', region_id: 'kediri-id', region_name: 'Kediri Raya', kecamatan: 'Ngadiluwih', nama_pengelola: 'Nyai Aminah', email_pengelola: 'aminah@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Approved', notes: null, claimed_at: '2026-01-03T10:00:00Z', created_at: '2026-01-03T10:00:00Z', jenis_pengajuan: 'klaim' },
-  { id: 'claim-12', user_id: 'u12', pesantren_name: 'PP Mambaul Hikam', status: 'regional_approved', region_id: 'jombang-id', region_name: 'Jombang', kecamatan: 'Mojowarno', nama_pengelola: 'KH. Abdurrahman Wahid', email_pengelola: 'gus@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Approved', notes: null, claimed_at: '2026-01-02T12:00:00Z', created_at: '2026-01-02T12:00:00Z', jenis_pengajuan: 'pesantren_baru' },
+  { id: 'claim-10', user_id: 'u10', pesantren_name: 'PP Bustanul Ulum', status: 'regional_approved', region_id: 'reg-01', region_name: 'Malang Raya', kecamatan: 'Lawang', nama_pengelola: 'KH. Hasyim Asyari', email_pengelola: 'hasyim@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Approved', notes: null, claimed_at: '2026-01-04T08:00:00Z', created_at: '2026-01-04T08:00:00Z', jenis_pengajuan: 'pesantren_baru' },
+  { id: 'claim-11', user_id: 'u11', pesantren_name: 'PP Al-Hidayah', status: 'regional_approved', region_id: 'reg-02', region_name: 'Kediri Raya', kecamatan: 'Ngadiluwih', nama_pengelola: 'Nyai Aminah', email_pengelola: 'aminah@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Approved', notes: null, claimed_at: '2026-01-03T10:00:00Z', created_at: '2026-01-03T10:00:00Z', jenis_pengajuan: 'klaim' },
+  { id: 'claim-12', user_id: 'u12', pesantren_name: 'PP Mambaul Hikam', status: 'regional_approved', region_id: 'reg-03', region_name: 'Jombang & Sekitarnya', kecamatan: 'Mojowarno', nama_pengelola: 'KH. Abdurrahman Wahid', email_pengelola: 'gus@email.com', dokumen_bukti_url: 'https://placehold.co/400x600/png?text=Approved', notes: null, claimed_at: '2026-01-02T12:00:00Z', created_at: '2026-01-02T12:00:00Z', jenis_pengajuan: 'pesantren_baru' },
   // Rejected
-  { id: 'claim-20', user_id: 'u20', pesantren_name: 'PP An-Nur', status: 'rejected', region_id: 'malang-id', region_name: 'Malang Raya', kecamatan: 'Blimbing', nama_pengelola: 'Budi Santoso', email_pengelola: 'budi@email.com', dokumen_bukti_url: null, notes: 'Dokumen tidak valid', claimed_at: '2026-01-01T10:00:00Z', created_at: '2026-01-01T10:00:00Z', jenis_pengajuan: 'klaim' },
+  { id: 'claim-20', user_id: 'u20', pesantren_name: 'PP An-Nur', status: 'rejected', region_id: 'reg-01', region_name: 'Malang Raya', kecamatan: 'Blimbing', nama_pengelola: 'Budi Santoso', email_pengelola: 'budi@email.com', dokumen_bukti_url: null, notes: 'Dokumen tidak valid', claimed_at: '2026-01-01T10:00:00Z', created_at: '2026-01-01T10:00:00Z', jenis_pengajuan: 'klaim' },
 ];
 
 // ============= PAYMENTS (Various statuses) =============
@@ -185,12 +231,12 @@ export const MOCK_PAYMENTS: MockPayment[] = [
   { id: 'pay-001', user_id: 'u10', pesantren_claim_id: 'claim-10', base_amount: 500000, unique_code: 123, total_amount: 500123, status: 'pending_payment', created_at: '2026-01-05T08:00:00Z', proof_file_url: null, rejection_reason: null, pesantren_name: 'PP Bustanul Ulum', nama_pengelola: 'KH. Hasyim Asyari', region_name: 'Malang Raya', jenis_pengajuan: 'pesantren_baru' },
   { id: 'pay-002', user_id: 'u11', pesantren_claim_id: 'claim-11', base_amount: 450000, unique_code: 456, total_amount: 450456, status: 'pending_payment', created_at: '2026-01-04T10:00:00Z', proof_file_url: null, rejection_reason: null, pesantren_name: 'PP Al-Hidayah', nama_pengelola: 'Nyai Aminah', region_name: 'Kediri Raya', jenis_pengajuan: 'klaim' },
   // Pending Verification (sudah upload, menunggu verifikasi Pusat)
-  { id: 'pay-003', user_id: 'u3', pesantren_claim_id: 'claim-3', base_amount: 500000, unique_code: 789, total_amount: 500789, status: 'pending_verification', created_at: '2026-01-03T09:00:00Z', proof_file_url: 'https://placehold.co/400x600/22c55e/fff?text=Bukti+Transfer+1', rejection_reason: null, pesantren_name: 'PP Riyadlul Ulum', nama_pengelola: 'KH. Zainal Abidin', region_name: 'Jombang', jenis_pengajuan: 'pesantren_baru' },
+  { id: 'pay-003', user_id: 'u3', pesantren_claim_id: 'claim-3', base_amount: 500000, unique_code: 789, total_amount: 500789, status: 'pending_verification', created_at: '2026-01-03T09:00:00Z', proof_file_url: 'https://placehold.co/400x600/22c55e/fff?text=Bukti+Transfer+1', rejection_reason: null, pesantren_name: 'PP Riyadlul Ulum', nama_pengelola: 'KH. Zainal Abidin', region_name: 'Jombang & Sekitarnya', jenis_pengajuan: 'pesantren_baru' },
   { id: 'pay-004', user_id: 'u4', pesantren_claim_id: 'claim-4', base_amount: 450000, unique_code: 321, total_amount: 450321, status: 'pending_verification', created_at: '2026-01-02T14:00:00Z', proof_file_url: 'https://placehold.co/400x600/3b82f6/fff?text=Bukti+Transfer+2', rejection_reason: null, pesantren_name: 'PP Salafiyah Syafiiyah', nama_pengelola: 'Nyai Hj. Aisyah', region_name: 'Probolinggo', jenis_pengajuan: 'klaim' },
   { id: 'pay-005', user_id: 'u5', pesantren_claim_id: 'claim-5', base_amount: 500000, unique_code: 654, total_amount: 500654, status: 'pending_verification', created_at: '2026-01-01T11:00:00Z', proof_file_url: 'https://placehold.co/400x600/8b5cf6/fff?text=Bukti+Transfer+3', rejection_reason: null, pesantren_name: 'PP Miftahul Huda', nama_pengelola: 'KH. Abdul Rahman', region_name: 'Malang Raya', jenis_pengajuan: 'pesantren_baru' },
   // Verified (sudah terverifikasi & NIP diterbitkan)
   { id: 'pay-006', user_id: 'u6', pesantren_claim_id: 'claim-6', base_amount: 500000, unique_code: 987, total_amount: 500987, status: 'verified', created_at: '2025-12-20T08:00:00Z', proof_file_url: 'https://placehold.co/400x600/10b981/fff?text=VERIFIED', rejection_reason: null, pesantren_name: 'PP Darussalam', nama_pengelola: 'KH. Muhammad Ridwan', region_name: 'Kediri Raya', jenis_pengajuan: 'pesantren_baru', verified_at: '2025-12-21T10:00:00Z', nip_issued: '2602003' },
-  { id: 'pay-007', user_id: 'u7', pesantren_claim_id: 'claim-7', base_amount: 450000, unique_code: 159, total_amount: 450159, status: 'verified', created_at: '2025-12-15T09:00:00Z', proof_file_url: 'https://placehold.co/400x600/10b981/fff?text=VERIFIED+2', rejection_reason: null, pesantren_name: 'PP Roudlotul Jannah', nama_pengelola: 'Nyai Hj. Fatimah', region_name: 'Jombang', jenis_pengajuan: 'klaim', verified_at: '2025-12-16T14:00:00Z', nip_issued: '2607004' },
+  { id: 'pay-007', user_id: 'u7', pesantren_claim_id: 'claim-7', base_amount: 450000, unique_code: 159, total_amount: 450159, status: 'verified', created_at: '2025-12-15T09:00:00Z', proof_file_url: 'https://placehold.co/400x600/10b981/fff?text=VERIFIED+2', rejection_reason: null, pesantren_name: 'PP Roudlotul Jannah', nama_pengelola: 'Nyai Hj. Fatimah', region_name: 'Jombang & Sekitarnya', jenis_pengajuan: 'klaim', verified_at: '2025-12-16T14:00:00Z', nip_issued: '2603004' },
   // Rejected (ditolak dengan alasan)
   { id: 'pay-008', user_id: 'u8', pesantren_claim_id: 'claim-8', base_amount: 500000, unique_code: 753, total_amount: 500753, status: 'rejected', created_at: '2025-12-10T10:00:00Z', proof_file_url: 'https://placehold.co/400x600/ef4444/fff?text=REJECTED', rejection_reason: 'Nominal transfer tidak sesuai dengan total tagihan', pesantren_name: 'PP An-Nur', nama_pengelola: 'Ahmad Fauzi', region_name: 'Probolinggo', jenis_pengajuan: 'pesantren_baru' },
   { id: 'pay-009', user_id: 'u9', pesantren_claim_id: 'claim-9', base_amount: 450000, unique_code: 852, total_amount: 450852, status: 'rejected', created_at: '2025-12-05T11:00:00Z', proof_file_url: 'https://placehold.co/400x600/ef4444/fff?text=REJECTED+2', rejection_reason: 'Bukti transfer blur/tidak jelas', pesantren_name: 'PP Al-Amin', nama_pengelola: 'Budi Hartono', region_name: 'Malang Raya', jenis_pengajuan: 'klaim' },
@@ -211,7 +257,7 @@ export const MOCK_ADMIN_PUSAT: MockAdminProfile = {
 export const MOCK_ADMIN_REGIONAL_MALANG: MockAdminProfile = {
   id: 'mock-regional-malang',
   nama_pesantren: 'Admin Regional Malang',
-  region_id: 'malang-id',
+  region_id: 'reg-01',
   region_name: 'Malang Raya',
   city_name: 'Kota Malang',
   region_code: '01',
@@ -226,7 +272,7 @@ export const MOCK_MEDIA_PLATINUM: MockAdminProfile = {
   id: 'p1', // Same as pesantren ID
   nama_pesantren: 'PP Al-Hikmah Singosari',
   nip: '2601001',
-  region_id: 'malang-id',
+  region_id: 'reg-01',
   region_name: 'Malang Raya',
   city_name: 'Kota Malang',
   role: 'user',
@@ -307,6 +353,7 @@ export const getDebugDataPackage = () => ({
   claims: MOCK_CLAIMS,
   payments: MOCK_PAYMENTS,
   regions: MOCK_REGIONS,
+  cities: MOCK_CITIES,
 });
 
 export const getAdminPusatDebugData = () => ({
@@ -314,7 +361,7 @@ export const getAdminPusatDebugData = () => ({
   data: getDebugDataPackage(),
 });
 
-export const getAdminRegionalDebugData = (regionId: string = 'malang-id') => ({
+export const getAdminRegionalDebugData = (regionId: string = 'reg-01') => ({
   profile: MOCK_ADMIN_REGIONAL_MALANG,
   data: {
     pesantren: getPesantrenByRegion(regionId),
@@ -322,6 +369,7 @@ export const getAdminRegionalDebugData = (regionId: string = 'malang-id') => ({
     claims: getClaimsByRegion(regionId),
     pendingClaims: getPendingClaimsByRegion(regionId),
     regions: MOCK_REGIONS,
+    cities: MOCK_CITIES.filter(c => c.region_id === regionId),
   },
 });
 
@@ -330,6 +378,20 @@ export const getMediaDebugData = () => ({
   crews: MOCK_CREWS.filter(c => c.profile_id === 'p1'),
   payments: MOCK_PAYMENTS.filter(p => p.pesantren_name === 'PP Al-Hikmah Singosari'),
 });
+
+/**
+ * Get cities filtered by region
+ */
+export const getCitiesByRegion = (regionId: string): MockCity[] => {
+  return MOCK_CITIES.filter(c => c.region_id === regionId);
+};
+
+/**
+ * Get unmapped cities (for mapping feature)
+ */
+export const getUnmappedCities = (): MockCity[] => {
+  return MOCK_CITIES.filter(c => c.region_id === null);
+};
 
 // ============= UNIFIED MOCK_DATA OBJECT (for DebugView) =============
 
@@ -344,6 +406,7 @@ export const MOCK_DATA = {
   pesantrenMultiRegion: MOCK_PESANTREN,
   crewMultiPesantren: MOCK_CREWS,
   regionsForFilter: MOCK_REGIONS,
+  citiesForMapping: MOCK_CITIES,
   paymentsForVerification: MOCK_PAYMENTS,
   claimsRegionalApproved: getRegionalApprovedClaims(),
 };

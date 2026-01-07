@@ -30,6 +30,7 @@ interface DebugData {
   pesantren?: unknown[];
   crews?: unknown[];
   regions?: unknown[];
+  cities?: unknown[];
   payments?: unknown[];
   claims?: unknown[];
 }
@@ -48,7 +49,7 @@ interface Region {
 interface City {
   id: string;
   name: string;
-  region_id: string;
+  region_id: string | null;
 }
 
 interface UserData {
@@ -172,6 +173,7 @@ const AdminPusatRegional = ({ isDebugMode, debugData }: Props = {}) => {
     // DEBUG MODE: Use mock data instead of fetching from database
     if (isDebugMode && debugData) {
       const regionsData = (debugData.regions || []) as Array<Record<string, unknown>>;
+      const citiesData = (debugData.cities || []) as Array<Record<string, unknown>>;
       const pesantrenData = (debugData.pesantren || []) as Array<Record<string, unknown>>;
 
       // Map regions from debug data
@@ -182,15 +184,18 @@ const AdminPusatRegional = ({ isDebugMode, debugData }: Props = {}) => {
       }));
       setRegions(mappedRegions);
 
-      // Create mock cities (2 per region)
-      const mockCities: City[] = [];
-      regionsData.forEach((region) => {
-        mockCities.push(
-          { id: `city-1-${region.id}`, name: `Kota ${region.name}`, region_id: String(region.id) },
-          { id: `city-2-${region.id}`, name: `Kabupaten ${region.name}`, region_id: String(region.id) }
-        );
-      });
-      setCities(mockCities);
+      // Map cities from debug data (use provided cities or create mock)
+      const mappedCities: City[] = citiesData.length > 0 
+        ? citiesData.map((item) => ({
+            id: String(item.id),
+            name: (item.name as string) || '',
+            region_id: (item.region_id as string) || null,
+          }))
+        : regionsData.flatMap((region) => [
+            { id: `city-1-${region.id}`, name: `Kota ${region.name}`, region_id: String(region.id) },
+            { id: `city-2-${region.id}`, name: `Kabupaten ${region.name}`, region_id: String(region.id) }
+          ]);
+      setCities(mappedCities);
 
       // Map users from pesantren data
       const mappedUsers: UserData[] = pesantrenData.map((item) => ({
@@ -206,8 +211,10 @@ const AdminPusatRegional = ({ isDebugMode, debugData }: Props = {}) => {
 
       // Calculate stats for regions with stats
       const cityCountMap: Record<string, number> = {};
-      mockCities.forEach((city) => {
-        cityCountMap[city.region_id] = (cityCountMap[city.region_id] || 0) + 1;
+      mappedCities.forEach((city) => {
+        if (city.region_id) {
+          cityCountMap[city.region_id] = (cityCountMap[city.region_id] || 0) + 1;
+        }
       });
 
       setRegionsWithStats(
@@ -249,7 +256,41 @@ const AdminPusatRegional = ({ isDebugMode, debugData }: Props = {}) => {
       return;
     }
 
+    // Check for duplicate code
+    if (regions.some(r => r.code === newRegionCode.trim())) {
+      toast({
+        title: "Error",
+        description: "Kode regional sudah digunakan",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSaving(true);
+
+    // DEBUG MODE: Simulate adding region locally
+    if (isDebugMode) {
+      const newRegion: Region = {
+        id: `reg-${Date.now()}`,
+        name: newRegionName.trim(),
+        code: newRegionCode.trim(),
+      };
+      
+      setRegions(prev => [...prev, newRegion]);
+      setRegionsWithStats(prev => [...prev, { ...newRegion, city_count: 0, admin_count: 0 }]);
+      setNewRegionName("");
+      setNewRegionCode("");
+      setIsAddRegionOpen(false);
+      setSelectedRegion(newRegion);
+      setIsSaving(false);
+      
+      toast({
+        title: "✅ Step 1 Selesai (Simulasi)",
+        description: `Regional "${newRegion.name}" (Kode: ${newRegion.code}) berhasil dibuat.`,
+      });
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("regions")
@@ -285,6 +326,23 @@ const AdminPusatRegional = ({ isDebugMode, debugData }: Props = {}) => {
   const handleDeleteRegion = async (region: Region) => {
     const regionCities = cities.filter(c => c.region_id === region.id);
     if (!confirm(`Hapus regional "${region.name}"? ${regionCities.length > 0 ? `${regionCities.length} kota juga akan terhapus.` : ""}`)) {
+      return;
+    }
+
+    // DEBUG MODE: Simulate delete locally
+    if (isDebugMode) {
+      setRegions(prev => prev.filter(r => r.id !== region.id));
+      setRegionsWithStats(prev => prev.filter(r => r.id !== region.id));
+      setCities(prev => prev.filter(c => c.region_id !== region.id));
+      
+      if (selectedRegion?.id === region.id) {
+        setSelectedRegion(null);
+      }
+
+      toast({
+        title: "Berhasil (Simulasi)",
+        description: `Regional "${region.name}" berhasil dihapus.`,
+      });
       return;
     }
 
@@ -338,6 +396,30 @@ const AdminPusatRegional = ({ isDebugMode, debugData }: Props = {}) => {
     }
 
     setIsSaving(true);
+
+    // DEBUG MODE: Simulate adding city locally
+    if (isDebugMode) {
+      const newCity: City = {
+        id: `cit-${Date.now()}`,
+        name: newCityName.trim(),
+        region_id: selectedRegion.id,
+      };
+      
+      setCities(prev => [...prev, newCity]);
+      setRegionsWithStats(prev => prev.map(r => 
+        r.id === selectedRegion.id ? { ...r, city_count: r.city_count + 1 } : r
+      ));
+      setNewCityName("");
+      setIsAddCityOpen(false);
+      setIsSaving(false);
+      
+      toast({
+        title: "✅ Step 2 Selesai (Simulasi)",
+        description: `Kota "${newCity.name}" berhasil ditambahkan ke ${selectedRegion.name}.`,
+      });
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("cities")
@@ -370,8 +452,50 @@ const AdminPusatRegional = ({ isDebugMode, debugData }: Props = {}) => {
     }
   };
 
+  // Mapping city to region (for unmapped cities)
+  const handleMapCityToRegion = (city: City, targetRegionId: string) => {
+    const oldRegionId = city.region_id;
+    
+    // Update city's region_id
+    setCities(prev => prev.map(c => 
+      c.id === city.id ? { ...c, region_id: targetRegionId } : c
+    ));
+    
+    // Update stats
+    setRegionsWithStats(prev => prev.map(r => {
+      if (r.id === oldRegionId) {
+        return { ...r, city_count: Math.max(0, r.city_count - 1) };
+      }
+      if (r.id === targetRegionId) {
+        return { ...r, city_count: r.city_count + 1 };
+      }
+      return r;
+    }));
+
+    const targetRegion = regions.find(r => r.id === targetRegionId);
+    toast({
+      title: "Mapping Berhasil",
+      description: `${city.name} dipindahkan ke ${targetRegion?.name || 'Regional Baru'}.`,
+    });
+  };
+
   const handleDeleteCity = async (city: City) => {
     if (!confirm(`Hapus kota "${city.name}"?`)) {
+      return;
+    }
+
+    // DEBUG MODE: Simulate delete locally
+    if (isDebugMode) {
+      setCities(prev => prev.filter(c => c.id !== city.id));
+      if (city.region_id) {
+        setRegionsWithStats(prev => prev.map(r => 
+          r.id === city.region_id ? { ...r, city_count: Math.max(0, r.city_count - 1) } : r
+        ));
+      }
+      toast({
+        title: "Berhasil (Simulasi)",
+        description: `Kota "${city.name}" berhasil dihapus.`,
+      });
       return;
     }
 
