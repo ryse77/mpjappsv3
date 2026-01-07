@@ -194,7 +194,8 @@ export const MOCK_PESANTREN: MockPesantren[] = [
 
 // ============= CREWS (10 entries from multiple pesantren) =============
 export const MOCK_CREWS: MockCrew[] = [
-  // Malang Raya
+  // Malang Raya - PP Al-Hikmah Singosari (Platinum) - includes Koordinator
+  { id: 'c0', nama: 'Muhammad Fadli', niam: 'KD260100100', jabatan: 'Koordinator', profile_id: 'p1', pesantren_name: 'PP Al-Hikmah Singosari', region_id: 'reg-01', region_name: 'Malang Raya', xp_level: 5000, skill: ['Manajemen', 'Leadership'], jabatan_code_id: 'jc-koordinator' },
   { id: 'c1', nama: 'Ahmad Rizky', niam: 'AN260100101', jabatan: 'Videografer', profile_id: 'p1', pesantren_name: 'PP Al-Hikmah Singosari', region_id: 'reg-01', region_name: 'Malang Raya', xp_level: 1500, skill: ['Videografi'] },
   { id: 'c2', nama: 'Budi Santoso', niam: 'AN260100102', jabatan: 'Editor', profile_id: 'p1', pesantren_name: 'PP Al-Hikmah Singosari', region_id: 'reg-01', region_name: 'Malang Raya', xp_level: 2500, skill: ['Editing'] },
   { id: 'c3', nama: 'Siti Aminah', niam: 'AN260100201', jabatan: 'Admin', profile_id: 'p2', pesantren_name: 'PP Nurul Huda Kepanjen', region_id: 'reg-01', region_name: 'Malang Raya', xp_level: 800, skill: ['Administrasi'] },
@@ -373,11 +374,16 @@ export const getAdminRegionalDebugData = (regionId: string = 'reg-01') => ({
   },
 });
 
-export const getMediaDebugData = () => ({
-  profile: MOCK_MEDIA_PLATINUM,
-  crews: MOCK_CREWS.filter(c => c.profile_id === 'p1'),
-  payments: MOCK_PAYMENTS.filter(p => p.pesantren_name === 'PP Al-Hikmah Singosari'),
-});
+export const getMediaDebugData = () => {
+  const crews = MOCK_CREWS.filter(c => c.profile_id === 'p1');
+  const koordinator = crews.find(c => c.jabatan === 'Koordinator');
+  return {
+    profile: MOCK_MEDIA_PLATINUM,
+    crews,
+    koordinator,
+    payments: MOCK_PAYMENTS.filter(p => p.pesantren_name === 'PP Al-Hikmah Singosari'),
+  };
+};
 
 /**
  * Get cities filtered by region

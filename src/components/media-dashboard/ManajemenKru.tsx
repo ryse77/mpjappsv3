@@ -51,18 +51,28 @@ interface CrewMember {
   whatsapp?: string;
 }
 
+interface KoordinatorData {
+  nama: string;
+  niam: string | null;
+  jabatan: string;
+  xp_level?: number;
+  photoUrl?: string;
+}
+
 interface ManajemenKruProps {
   paymentStatus: "paid" | "unpaid";
   debugProfile?: {
     nip?: string;
     nama_pesantren?: string;
   };
+  onKoordinatorChange?: (koordinator: KoordinatorData | undefined) => void;
 }
 
 const FREE_SLOT_LIMIT = 3;
 
-// Jabatan options based on ERD
+// Jabatan options based on ERD - includes Koordinator
 const jabatanOptions = [
+  { value: "koordinator", label: "Koordinator" },
   { value: "admin_media", label: "Admin Media" },
   { value: "fotografer", label: "Fotografer" },
   { value: "videografer", label: "Videografer" },
@@ -227,8 +237,9 @@ const CrewList = memo(({
 });
 CrewList.displayName = 'CrewList';
 
-const ManajemenKru = ({ paymentStatus, debugProfile }: ManajemenKruProps) => {
+const ManajemenKru = ({ paymentStatus, debugProfile, onKoordinatorChange }: ManajemenKruProps) => {
   const { user } = useAuth();
+  const location = (typeof window !== 'undefined' ? window : null);
   const [crewMembers, setCrewMembers] = useState<CrewMember[]>([]);
   const [jabatanCodes, setJabatanCodes] = useState<JabatanCode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -241,6 +252,9 @@ const ManajemenKru = ({ paymentStatus, debugProfile }: ManajemenKruProps) => {
     whatsapp: "",
   });
   const [emailError, setEmailError] = useState("");
+
+  // Check if in debug mode
+  const isDebugMode = !!debugProfile;
 
   // Memoized computed values for slot logic (The Golden 3)
   const slotStatus = useMemo(() => {
@@ -257,9 +271,56 @@ const ManajemenKru = ({ paymentStatus, debugProfile }: ManajemenKruProps) => {
     };
   }, [crewMembers.length, paymentStatus]);
 
+  // Notify parent when koordinator changes
+  useEffect(() => {
+    if (onKoordinatorChange) {
+      const koordinator = crewMembers.find(c => c.jabatan === 'Koordinator');
+      if (koordinator) {
+        onKoordinatorChange({
+          nama: koordinator.nama,
+          niam: koordinator.niam,
+          jabatan: koordinator.jabatan || 'Koordinator',
+          xp_level: koordinator.xp_level || 0,
+        });
+      } else {
+        onKoordinatorChange(undefined);
+      }
+    }
+  }, [crewMembers, onKoordinatorChange]);
+
   // Fetch crew members and jabatan codes
   const fetchData = useCallback(async () => {
-    if (!user?.id) return;
+    // In debug mode, use mock data
+    if (isDebugMode) {
+      // Import mock data dynamically to avoid circular dependencies
+      import('@/lib/debug-mock-data').then(({ getMediaDebugData }) => {
+        const mediaData = getMediaDebugData();
+        const mockJabatanCodes: JabatanCode[] = [
+          { id: 'jc-koordinator', name: 'Koordinator', code: 'KD', description: 'Koordinator Media' },
+          { id: 'jc-admin', name: 'Admin Media', code: 'AM', description: 'Administrator Media' },
+          { id: 'jc-fotografer', name: 'Fotografer', code: 'FT', description: 'Fotografer' },
+          { id: 'jc-videografer', name: 'Videografer', code: 'VD', description: 'Videografer' },
+          { id: 'jc-editor', name: 'Editor', code: 'ED', description: 'Editor' },
+        ];
+        setJabatanCodes(mockJabatanCodes);
+        setCrewMembers(mediaData.crews.map(c => ({
+          id: c.id,
+          nama: c.nama,
+          jabatan: c.jabatan,
+          niam: c.niam,
+          xp_level: c.xp_level,
+          skill: c.skill || [],
+          jabatan_code_id: c.jabatan_code_id || null,
+        })));
+        setIsLoading(false);
+      });
+      return;
+    }
+
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     try {
@@ -283,7 +344,7 @@ const ManajemenKru = ({ paymentStatus, debugProfile }: ManajemenKruProps) => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, isDebugMode]);
 
   useEffect(() => {
     fetchData();
