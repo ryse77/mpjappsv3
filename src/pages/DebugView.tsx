@@ -30,6 +30,7 @@ import {
   MOCK_REGIONS,
   getDebugDataPackage,
   getAdminRegionalDebugData,
+  getMediaDebugData,
 } from "@/lib/debug-mock-data";
 
 const DebugView = () => {
@@ -322,9 +323,18 @@ const DebugView = () => {
                 </Button>
                 <Button 
                   className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
-                  onClick={() => navigateWithState('/user', { 
-                    debugProfile: MOCK_DATA.mediaPlatinum 
-                  })}
+                  onClick={() => {
+                    const mediaData = getMediaDebugData();
+                    navigateWithState('/user', { 
+                      debugProfile: mediaData.profile,
+                      koordinator: mediaData.koordinator ? {
+                        nama: mediaData.koordinator.nama,
+                        niam: mediaData.koordinator.niam,
+                        jabatan: mediaData.koordinator.jabatan,
+                        xp_level: mediaData.koordinator.xp_level,
+                      } : undefined
+                    });
+                  }}
                 >
                   Buka Dashboard
                   <ArrowRight className="h-4 w-4 ml-2" />

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatNIP, getProfileLevelInfo } from "@/lib/id-utils";
 import { ProfileLevelBadge, VerifiedBadge } from "@/components/shared/LevelBadge";
+import { supabase } from "@/integrations/supabase/client";
 import MediaDashboardHome from "@/components/media-dashboard/MediaDashboardHome";
 import IdentitasPesantren from "@/components/media-dashboard/IdentitasPesantren";
 import ManajemenKru from "@/components/media-dashboard/ManajemenKru";
@@ -32,6 +33,14 @@ import MPJHub from "@/components/media-dashboard/MPJHub";
 import Pengaturan from "@/components/media-dashboard/Pengaturan";
 import EventPage from "@/components/media-dashboard/EventPage";
 import EIDAsetPage from "@/components/media-dashboard/EIDAsetPage";
+
+interface KoordinatorData {
+  nama: string;
+  niam: string | null;
+  jabatan: string;
+  xp_level?: number;
+  photoUrl?: string;
+}
 
 // Menu order as per specification
 type ViewType = "beranda" | "identitas" | "administrasi" | "tim" | "event" | "eid" | "hub" | "pengaturan";
@@ -51,13 +60,15 @@ const menuItems = [
 const MediaDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile: authProfile, signOut } = useAuth();
+  const { profile: authProfile, signOut, user } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>("beranda");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [koordinator, setKoordinator] = useState<KoordinatorData | undefined>();
   const { toast } = useToast();
   
   // Support debug mode via location.state
   const debugProfile = (location.state as any)?.debugProfile;
+  const debugKoordinator = (location.state as any)?.koordinator;
   const isDebugMode = (location.state as any)?.isDebugMode;
   
   // Use debug profile if available, otherwise use auth profile
@@ -67,6 +78,43 @@ const MediaDashboard = () => {
   const profileLevel = profile?.profile_level ?? 'basic';
   const levelInfo = getProfileLevelInfo(profileLevel);
   const isPlatinum = profileLevel === 'platinum';
+
+  // Fetch Koordinator from crews table
+  useEffect(() => {
+    const fetchKoordinator = async () => {
+      if (isDebugMode && debugKoordinator) {
+        setKoordinator(debugKoordinator);
+        return;
+      }
+
+      if (!user?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('crews')
+          .select('nama, niam, jabatan, xp_level')
+          .eq('profile_id', user.id)
+          .eq('jabatan', 'Koordinator')
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (data) {
+          setKoordinator({
+            nama: data.nama,
+            niam: data.niam,
+            jabatan: data.jabatan || 'Koordinator',
+            xp_level: data.xp_level || 0,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching koordinator:', error);
+      }
+    };
+
+    fetchKoordinator();
+  }, [user?.id, isDebugMode, debugKoordinator]);
 
   const handleLogout = async () => {
     if (isDebugMode) {
@@ -120,13 +168,20 @@ const MediaDashboard = () => {
           />
         );
       case "tim":
-        return <ManajemenKru paymentStatus={paymentStatus} debugProfile={isDebugMode ? profile : undefined} />;
+        return (
+          <ManajemenKru 
+            paymentStatus={paymentStatus} 
+            debugProfile={isDebugMode ? profile : undefined}
+            onKoordinatorChange={setKoordinator}
+          />
+        );
       case "eid":
         return (
           <EIDAsetPage 
             paymentStatus={paymentStatus}
             profileLevel={profileLevel}
             debugProfile={isDebugMode ? profile : undefined}
+            koordinator={koordinator}
           />
         );
       case "administrasi":
