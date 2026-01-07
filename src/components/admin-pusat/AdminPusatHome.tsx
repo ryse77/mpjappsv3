@@ -257,8 +257,8 @@ const AdminPusatHome = ({ onNavigate, isDebugMode, debugData }: Props) => {
       {/* Welcome Card */}
       <Card className="bg-gradient-to-r from-emerald-800 to-emerald-600 border-0">
         <CardContent className="p-4 md:p-6">
-          <h1 className="text-xl md:text-2xl font-bold text-white">Command Center MPJ Jawa Timur</h1>
-          <p className="text-emerald-100 mt-1 text-sm md:text-base">Pantau seluruh data dan aktivitas pesantren se-Jawa Timur</p>
+          <h1 className="text-xl md:text-2xl font-bold text-white tracking-wide">MPJ Pusat</h1>
+          <p className="text-emerald-100 mt-1 text-sm md:text-base">Pusat Kendali Majelis Pondok Jawa Timur</p>
         </CardContent>
       </Card>
 
