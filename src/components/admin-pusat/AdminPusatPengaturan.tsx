@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Settings, User, Lock, UserPlus, Search, Trash2, Shield, Users } from "lucide-react";
+import { User, Lock, UserPlus, Search, Trash2, Shield, Users, MapPin, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -14,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { formatNIAM } from "@/lib/id-utils";
+import AsistenPusatManagement from "./AsistenPusatManagement";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -45,11 +47,16 @@ interface Region {
   name: string;
 }
 
-const AdminPusatPengaturan = () => {
+interface AdminPusatPengaturanProps {
+  isDebugMode?: boolean;
+}
+
+const AdminPusatPengaturan = ({ isDebugMode = false }: AdminPusatPengaturanProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [activeTab, setActiveTab] = useState("akun");
   
   // Admin management state
   const [adminList, setAdminList] = useState<AdminUser[]>([]);
@@ -326,195 +333,129 @@ const AdminPusatPengaturan = () => {
         <p className="text-muted-foreground mt-1">Kelola akun dan personil admin</p>
       </div>
 
-      {/* Profile Section */}
-      <Card className="bg-card border-0 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-foreground font-semibold flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
-            Profil Akun
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground">Email</Label>
-              <Input 
-                value={user?.email || ""} 
-                disabled 
-                className="mt-1 bg-muted"
-              />
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Role</Label>
-              <Input 
-                value="Admin Pusat" 
-                disabled 
-                className="mt-1 bg-muted"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs Navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="akun" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span className="hidden sm:inline">Akun</span>
+          </TabsTrigger>
+          <TabsTrigger value="tim-pusat" className="flex items-center gap-2">
+            <Crown className="h-4 w-4" />
+            <span className="hidden sm:inline">Tim Pusat</span>
+          </TabsTrigger>
+          <TabsTrigger value="regional" className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            <span className="hidden sm:inline">Regional</span>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Change Password */}
-      <Card className="bg-card border-0 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-foreground font-semibold flex items-center gap-2">
-            <Lock className="h-5 w-5 text-primary" />
-            Ganti Password
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground">Password Lama</Label>
-              <Input 
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Masukkan password lama"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Password Baru</Label>
-              <Input 
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Masukkan password baru"
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <Button 
-            onClick={handleChangePassword}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            Simpan Password
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Admin Management Section */}
-      <Card className="bg-card border-0 shadow-sm">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg text-foreground font-semibold flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              Kelola Personil Admin
-            </CardTitle>
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              Tambah Admin
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Tambah atau hapus personil admin dari database kru yang sudah terdaftar.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          
-          {/* Admin Pusat Section */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Shield className="h-4 w-4 text-purple-600" />
-              <h3 className="font-semibold text-foreground">Tim Pusat ({adminPusatList.length})</h3>
-            </div>
-            
-            {loading ? (
-              <div className="flex items-center justify-center h-16">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+        {/* Tab: Akun */}
+        <TabsContent value="akun" className="space-y-6">
+          {/* Profile Section */}
+          <Card className="bg-card border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg text-foreground font-semibold flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                Profil Akun
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Email</Label>
+                  <Input 
+                    value={user?.email || ""} 
+                    disabled 
+                    className="mt-1 bg-muted"
+                  />
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Role</Label>
+                  <Input 
+                    value="Admin Pusat" 
+                    disabled 
+                    className="mt-1 bg-muted"
+                  />
+                </div>
               </div>
-            ) : (
-              <>
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-muted-foreground">NIAM</TableHead>
-                        <TableHead className="text-muted-foreground">Nama</TableHead>
-                        <TableHead className="text-muted-foreground">Jabatan</TableHead>
-                        <TableHead className="text-muted-foreground">Role</TableHead>
-                        <TableHead className="text-muted-foreground text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {adminPusatList.length > 0 ? (
-                        adminPusatList.map((admin) => (
-                          <TableRow key={admin.id}>
-                            <TableCell className="font-mono text-sm">
-                              {admin.niam ? formatNIAM(admin.niam, true) : "-"}
-                            </TableCell>
-                            <TableCell className="font-medium text-foreground">{admin.nama}</TableCell>
-                            <TableCell className="text-muted-foreground">{admin.jabatan || "-"}</TableCell>
-                            <TableCell>{getRoleBadge(admin.role)}</TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteTarget(admin)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                            Belum ada Admin Pusat
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+            </CardContent>
+          </Card>
+
+          {/* Change Password */}
+          <Card className="bg-card border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg text-foreground font-semibold flex items-center gap-2">
+                <Lock className="h-5 w-5 text-primary" />
+                Ganti Password
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Password Lama</Label>
+                  <Input 
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Masukkan password lama"
+                    className="mt-1"
+                  />
                 </div>
-
-                {/* Mobile Cards */}
-                <div className="md:hidden space-y-3">
-                  {adminPusatList.length > 0 ? (
-                    adminPusatList.map((admin) => (
-                      <div key={admin.id} className="bg-muted/30 rounded-lg p-4 border border-border/50">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-semibold text-foreground">{admin.nama}</p>
-                            {admin.niam && (
-                              <p className="text-sm font-mono text-primary">{formatNIAM(admin.niam, true)}</p>
-                            )}
-                            <p className="text-sm text-muted-foreground">{admin.jabatan || "-"}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {getRoleBadge(admin.role)}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleteTarget(admin)}
-                              className="h-8 w-8 p-0 text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-muted-foreground py-4">Belum ada Admin Pusat</p>
-                  )}
+                <div>
+                  <Label className="text-muted-foreground">Password Baru</Label>
+                  <Input 
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Masukkan password baru"
+                    className="mt-1"
+                  />
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+              <Button 
+                onClick={handleChangePassword}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Simpan Password
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <div className="border-t border-border" />
+        {/* Tab: Tim Pusat (Asisten Pusat) */}
+        <TabsContent value="tim-pusat">
+          <AsistenPusatManagement isDebugMode={isDebugMode} />
+        </TabsContent>
 
-          {/* Admin Regional Section */}
-          <div>
+        {/* Tab: Admin Regional */}
+        <TabsContent value="regional" className="space-y-6">
+          <Card className="bg-card border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg text-foreground font-semibold flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                  Kelola Admin Regional
+                </CardTitle>
+                <Button 
+                  onClick={() => {
+                    setSelectedRole("admin_regional");
+                    setIsAddDialogOpen(true);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Tambah Admin Regional
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Setiap wilayah hanya memiliki 1 Admin Regional. Menunjuk yang baru akan menggantikan yang lama.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+
+              {/* Admin Regional Section */}
+              <div>
             <div className="flex items-center gap-2 mb-3">
               <Shield className="h-4 w-4 text-blue-600" />
               <h3 className="font-semibold text-foreground">Admin Regional ({adminRegionalList.length})</h3>
@@ -605,6 +546,8 @@ const AdminPusatPengaturan = () => {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Add Admin Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
