@@ -25,6 +25,7 @@ import DebugView from "./pages/DebugView";
 // STATUS PAGES (Auth required, special handling in ProtectedRoute)
 // ═══════════════════════════════════════════════════════════════
 import VerificationPending from "./pages/VerificationPending";
+import AccountRejected from "./pages/AccountRejected";
 import Forbidden from "./pages/Forbidden";
 
 // ═══════════════════════════════════════════════════════════════
@@ -76,6 +77,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <VerificationPending />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/account-rejected" 
+              element={
+                <ProtectedRoute>
+                  <AccountRejected />
                 </ProtectedRoute>
               } 
             />
