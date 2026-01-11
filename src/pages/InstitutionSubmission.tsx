@@ -354,13 +354,13 @@ const InstitutionSubmission = () => {
 
       if (updateError) throw updateError;
 
-      await supabase.auth.signOut();
-      setIsSuccess(true);
-
       toast({
         title: "Pendaftaran Berhasil!",
         description: "Menunggu verifikasi admin wilayah.",
       });
+      
+      // Redirect to verification-pending instead of logout
+      navigate('/verification-pending', { replace: true });
     } catch (error: any) {
       console.error("Location update error:", error);
       toast({
@@ -376,12 +376,13 @@ const InstitutionSubmission = () => {
   const handleSkipStep2 = async () => {
     setIsSubmitting(true);
     try {
-      await supabase.auth.signOut();
-      setIsSuccess(true);
       toast({
         title: "Pendaftaran Berhasil!",
         description: "Menunggu verifikasi admin wilayah.",
       });
+      
+      // Redirect to verification-pending instead of logout
+      navigate('/verification-pending', { replace: true });
     } catch (error: any) {
       console.error("Skip error:", error);
     } finally {
@@ -401,45 +402,10 @@ const InstitutionSubmission = () => {
     );
   }
 
-  // Success State
+  // Success State - This shouldn't show anymore as we redirect to /verification-pending
+  // Keeping for fallback only
   if (isSuccess) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-md text-center">
-          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground mb-3">
-            Pendaftaran Berhasil
-          </h1>
-          <p className="text-muted-foreground mb-6 leading-relaxed">
-            Menunggu Verifikasi Admin Wilayah. Anda akan menerima notifikasi
-            WhatsApp dalam <span className="font-semibold">1x24 jam</span>.
-          </p>
-          <div className="bg-muted rounded-xl p-4 mb-6 space-y-2 text-left">
-            <div>
-              <p className="text-xs text-muted-foreground">Pesantren:</p>
-              <p className="font-medium text-foreground">{formData.namaPesantren}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Pengasuh:</p>
-              <p className="font-medium text-foreground">{formData.namaPengasuh}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Pengelola:</p>
-              <p className="font-medium text-foreground">{formData.namaPengelola}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">WhatsApp:</p>
-              <p className="font-medium text-foreground">{formData.noWhatsapp}</p>
-            </div>
-          </div>
-          <Button onClick={() => navigate("/login")} className="w-full h-12 rounded-xl">
-            Ke Halaman Login
-          </Button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

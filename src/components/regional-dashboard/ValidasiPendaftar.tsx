@@ -420,12 +420,19 @@ const ValidasiPendaftar = ({ isDebugMode = false }: ValidasiPendaftarProps) => {
     }
   };
 
-  // Generate WhatsApp message for approval notification
+  // Generate WhatsApp message for approval notification - different for klaim vs pesantren_baru
   const generateApprovalWhatsAppUrl = (claim: PesantrenClaim) => {
     const phone = claim.no_wa_pendaftar?.replace(/^0/, '62') || '';
-    const message = encodeURIComponent(
-      `Assalamu'alaikum,\n\nBerkas klaim akun MPJ Apps untuk *${claim.pesantren_name}* telah kami verifikasi dan disetujui.\n\nSilakan login untuk mulai mengelola profil. Terima kasih.`
-    );
+    const isKlaim = claim.jenis_pengajuan === 'klaim';
+    
+    const message = isKlaim
+      ? encodeURIComponent(
+          `Assalamu'alaikum,\n\nBerkas *KLAIM AKUN* MPJ Apps untuk *${claim.pesantren_name}* telah kami verifikasi dan disetujui.\n\nAkun Anda sudah aktif dengan data lama. Silakan login untuk mulai mengelola profil.\n\nTerima kasih.`
+        )
+      : encodeURIComponent(
+          `Assalamu'alaikum,\n\nBerkas *PENDAFTARAN BARU* MPJ Apps untuk *${claim.pesantren_name}* telah kami verifikasi dan disetujui.\n\nSilakan login dan lanjutkan ke proses pembayaran untuk mendapatkan NIP/NIAM resmi.\n\nTerima kasih.`
+        );
+    
     return `https://wa.me/${phone}?text=${message}`;
   };
 

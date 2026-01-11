@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, LogOut, Home, MessageCircle, CheckCircle, Lock, RefreshCw } from "lucide-react";
+import { Clock, LogOut, Home, MessageCircle, CheckCircle, Lock, RefreshCw, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ interface ClaimData {
   nama_pengelola: string | null;
   region_id: string | null;
   status: string;
+  jenis_pengajuan: 'klaim' | 'pesantren_baru';
 }
 
 interface RegionData {
@@ -28,6 +29,7 @@ interface RegionData {
  * - Region-specific admin contact via WhatsApp
  * - Auto-refresh to check status updates
  * - Logout option
+ * - Different messages for klaim vs pesantren_baru
  */
 const VerificationPending = () => {
   const navigate = useNavigate();
@@ -46,7 +48,7 @@ const VerificationPending = () => {
       // Fetch user's claim data
       const { data: claim, error: claimError } = await supabase
         .from('pesantren_claims')
-        .select('pesantren_name, nama_pengelola, region_id, status')
+        .select('pesantren_name, nama_pengelola, region_id, status, jenis_pengajuan')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -65,6 +67,27 @@ const VerificationPending = () => {
             description: "Selamat! Akun Anda telah aktif.",
           });
           navigate('/user', { replace: true });
+          return;
+        }
+
+        // If status changed to regional_approved, redirect to payment
+        if (claim.status === 'regional_approved') {
+          // For klaim, redirect to dashboard (auto-activate)
+          if (claim.jenis_pengajuan === 'klaim') {
+            toast({
+              title: "Klaim Disetujui! ✅",
+              description: "Akun legacy Anda telah diaktifkan.",
+            });
+            navigate('/user', { replace: true });
+            return;
+          }
+          
+          // For pesantren_baru, redirect to payment
+          toast({
+            title: "Verifikasi Regional Disetujui! ✅",
+            description: "Silakan lanjutkan ke proses pembayaran.",
+          });
+          navigate('/payment', { replace: true });
           return;
         }
 
@@ -130,10 +153,17 @@ const VerificationPending = () => {
     const pengaju = claimData?.nama_pengelola || 'Pengaju';
     const pesantren = claimData?.pesantren_name || 'Pesantren';
     const phone = regionData?.admin_phone || '6281234567890';
+    const isKlaim = claimData?.jenis_pengajuan === 'klaim';
     
-    const message = encodeURIComponent(
-      `Assalamu'alaikum Admin,\n\nSaya ${pengaju} ingin menanyakan status verifikasi klaim untuk ${pesantren}.\n\nTerima kasih.`
-    );
+    // Different message based on jenis_pengajuan
+    const message = isKlaim
+      ? encodeURIComponent(
+          `Assalamu'alaikum Admin,\n\nSaya ${pengaju} ingin menanyakan status verifikasi KLAIM AKUN untuk ${pesantren} di MPJ Apps.\n\nTerima kasih.`
+        )
+      : encodeURIComponent(
+          `Assalamu'alaikum Admin,\n\nSaya ${pengaju} ingin memverifikasi PENDAFTARAN BARU pesantren ${pesantren} di MPJ Apps.\n\nTerima kasih.`
+        );
+    
     window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   };
 
@@ -147,6 +177,8 @@ const VerificationPending = () => {
       </div>
     );
   }
+
+  const isKlaim = claimData?.jenis_pengajuan === 'klaim';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-4">
@@ -171,9 +203,9 @@ const VerificationPending = () => {
             {/* Info Box */}
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
               <p className="text-sm text-emerald-800 leading-relaxed">
-                Alhamdulillah, data pesantren <span className="font-semibold">{claimData?.pesantren_name || 'Anda'}</span> telah masuk ke sistem kami. 
+                Alhamdulillah, data {isKlaim ? 'klaim akun' : 'pendaftaran'} pesantren <span className="font-semibold">{claimData?.pesantren_name || 'Anda'}</span> telah masuk ke sistem kami. 
                 {regionData?.name && (
-                  <> Saat ini Admin Regional <span className="font-semibold">{regionData.name}</span> sedang melakukan pengecekan berkas untuk menjaga keaslian data.</>
+                  <> Saat ini Admin Regional <span className="font-semibold">{regionData.name}</span> sedang melakukan {isKlaim ? 'pengecekan kesesuaian data' : 'verifikasi dokumen pesantren'}.</>
                 )}
               </p>
             </div>
@@ -192,7 +224,9 @@ const VerificationPending = () => {
                 </div>
                 <div className="pt-2">
                   <p className="text-sm font-medium text-foreground">Data Terkirim</p>
-                  <p className="text-xs text-muted-foreground">Berkas klaim telah diterima</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isKlaim ? 'Berkas klaim telah diterima' : 'Berkas pendaftaran telah diterima'}
+                  </p>
                 </div>
               </div>
 
@@ -206,20 +240,30 @@ const VerificationPending = () => {
                 </div>
                 <div className="pt-2">
                   <p className="text-sm font-medium text-amber-700">Verifikasi Admin Regional</p>
-                  <p className="text-xs text-muted-foreground">Dalam proses pengecekan</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isKlaim ? 'Pencocokan data pengaju dengan data lama' : 'Pengecekan keaslian pesantren'}
+                  </p>
                 </div>
               </div>
 
-              {/* Step 3: Akun Aktif */}
+              {/* Step 3: Payment (for pesantren_baru) or Active (for klaim) */}
               <div className="flex items-start gap-4">
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <Lock className="w-5 h-5 text-gray-400" />
+                    {isKlaim ? (
+                      <CheckCircle className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <CreditCard className="w-5 h-5 text-gray-400" />
+                    )}
                   </div>
                 </div>
                 <div className="pt-2 opacity-50">
-                  <p className="text-sm font-medium text-foreground">Akun Aktif & NIAM Terbit</p>
-                  <p className="text-xs text-muted-foreground">Menunggu verifikasi selesai</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {isKlaim ? 'Akun Aktif (Data Lama)' : 'Pembayaran & Aktivasi NIP'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isKlaim ? 'Akun langsung aktif dengan data existing' : 'Lanjutkan ke pembayaran untuk NIP'}
+                  </p>
                 </div>
               </div>
             </div>
