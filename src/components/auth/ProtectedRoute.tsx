@@ -38,7 +38,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const locationState = location.state as { isDebugMode?: boolean } | null;
   const isDebugMode = locationState?.isDebugMode === true;
 
-  // Handle rejected status with logout
+  // Handle rejected status - redirect to account-rejected page
   useEffect(() => {
     // Skip rejection handling in debug mode
     if (isDebugMode) return;
@@ -46,20 +46,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     if (
       profile?.status_account === 'rejected' && 
       !hasHandledRejection.current &&
-      location.pathname !== '/login'
+      location.pathname !== '/login' &&
+      location.pathname !== '/account-rejected'
     ) {
       hasHandledRejection.current = true;
-      
-      toast({
-        title: "Akun Ditolak",
-        description: "Akun Anda telah ditolak. Silakan hubungi Admin untuk informasi lebih lanjut.",
-        variant: "destructive",
-        duration: 6000,
-      });
-      
-      signOut();
     }
-  }, [profile?.status_account, signOut, toast, location.pathname, isDebugMode]);
+  }, [profile?.status_account, location.pathname, isDebugMode]);
 
   // Reset rejection handler when user changes
   useEffect(() => {
@@ -110,17 +102,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     return <Navigate to="/verification-pending" replace />;
   }
 
-  // Status = rejected → handled by useEffect (logout + alert)
-  // Return null while logout is processing
+  // Status = rejected → redirect to account-rejected page
   if (profile.status_account === 'rejected') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-destructive border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Memproses...</p>
-        </div>
-      </div>
-    );
+    // Allow access to account-rejected page itself
+    if (location.pathname === '/account-rejected') {
+      return <>{children}</>;
+    }
+    return <Navigate to="/account-rejected" replace />;
   }
 
   // ═══════════════════════════════════════════════════════════════
