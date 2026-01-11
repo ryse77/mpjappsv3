@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Download, Lock, Award, IdCard, Eye, Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VirtualCharter } from "@/components/shared/VirtualCharter";
@@ -38,6 +39,10 @@ interface EIDAsetPageProps {
  * E-ID & Aset Page
  * - Piagam Pesantren: Single Virtual Charter (highest tier achieved) - uses institution data
  * - E-ID Koordinator: Virtual and Physical Member Card - uses CREW data (NIAM)
+ * 
+ * PAYWALL LOGIC:
+ * - If status_payment === 'unpaid', download buttons are disabled with lock icon
+ * - Tooltip shows message: 'Fitur ini hanya tersedia untuk anggota yang sudah melakukan aktivasi pembayaran.'
  */
 const EIDAsetPage = ({ 
   paymentStatus, 
@@ -70,6 +75,10 @@ const EIDAsetPage = ({
   const highestLevel = getHighestLevel();
   const canAccessEID = paymentStatus === "paid" && (profileLevel === "gold" || profileLevel === "platinum");
   const hasKoordinator = koordinator && koordinator.niam;
+  
+  // Check if user is unpaid - for paywall logic
+  const isUnpaid = paymentStatus === "unpaid";
+  const lockedTooltipMessage = "Fitur ini hanya tersedia untuk anggota yang sudah melakukan aktivasi pembayaran.";
 
   const getLevelBadgeColor = () => {
     switch (highestLevel) {
@@ -80,6 +89,14 @@ const EIDAsetPage = ({
   };
 
   const handleDownload = () => {
+    if (isUnpaid) {
+      toast({
+        title: "Fitur Terkunci",
+        description: lockedTooltipMessage,
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
       title: "Download Piagam",
       description: "Fitur download sedang dalam pengembangan",
@@ -136,14 +153,34 @@ const EIDAsetPage = ({
                 />
               </div>
               <div className="flex justify-center mt-6">
-                <Button 
-                  onClick={handleDownload}
-                  className="bg-[#166534] hover:bg-[#14532d]"
-                  disabled={paymentStatus === "unpaid"}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Piagam
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button 
+                          onClick={handleDownload}
+                          className={isUnpaid 
+                            ? "bg-slate-400 hover:bg-slate-400 cursor-not-allowed" 
+                            : "bg-[#166534] hover:bg-[#14532d]"
+                          }
+                          disabled={isUnpaid}
+                        >
+                          {isUnpaid ? (
+                            <Lock className="h-4 w-4 mr-2" />
+                          ) : (
+                            <Download className="h-4 w-4 mr-2" />
+                          )}
+                          Download Piagam
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {isUnpaid && (
+                      <TooltipContent>
+                        <p className="max-w-xs">{lockedTooltipMessage}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardContent>
           </Card>
@@ -238,13 +275,34 @@ const EIDAsetPage = ({
 
           {canAccessEID && hasKoordinator && (
             <div className="flex justify-center">
-              <Button 
-                onClick={handleDownload}
-                className="bg-[#166534] hover:bg-[#14532d]"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download Layout Cetak (PDF)
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button 
+                        onClick={handleDownload}
+                        className={isUnpaid 
+                          ? "bg-slate-400 hover:bg-slate-400 cursor-not-allowed" 
+                          : "bg-[#166534] hover:bg-[#14532d]"
+                        }
+                        disabled={isUnpaid}
+                      >
+                        {isUnpaid ? (
+                          <Lock className="h-4 w-4 mr-2" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-2" />
+                        )}
+                        Download Layout Cetak (PDF)
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {isUnpaid && (
+                    <TooltipContent>
+                      <p className="max-w-xs">{lockedTooltipMessage}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           )}
         </TabsContent>
