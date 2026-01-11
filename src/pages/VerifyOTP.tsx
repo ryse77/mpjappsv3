@@ -2,20 +2,35 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, RefreshCw, CheckCircle, Smartphone } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle, Smartphone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [attemptsRemaining, setAttemptsRemaining] = useState(5);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { type, phone } = (location.state as { type: string; phone?: string }) || {};
+  const {
+    type,
+    phone,
+    pesantren_claim_id,
+    otp_id,
+    pesantren_name,
+  } = (location.state as {
+    type: string;
+    phone?: string;
+    pesantren_claim_id?: string;
+    otp_id?: string;
+    pesantren_name?: string;
+  }) || {};
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -26,9 +41,15 @@ const VerifyOTP = () => {
     }
   }, [resendTimer]);
 
+  // Auto-focus first input
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
+
   const handleChange = (index: number, value: string) => {
+    // Handle paste
     if (value.length > 1) {
-      const pastedValue = value.slice(0, 6).split("");
+      const pastedValue = value.replace(/\D/g, "").slice(0, 6).split("");
       const newOtp = [...otp];
       pastedValue.forEach((char, i) => {
         if (index + i < 6) {
@@ -41,6 +62,7 @@ const VerifyOTP = () => {
       return;
     }
 
+    // Only allow digits
     if (!/^\d*$/.test(value)) return;
 
     const newOtp = [...otp];
@@ -58,9 +80,9 @@ const VerifyOTP = () => {
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const otpCode = otp.join("");
-    
+
     if (otpCode.length !== 6) {
       toast({
         title: "Kode tidak lengkap",
@@ -72,60 +94,126 @@ const VerifyOTP = () => {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Call OTP verify edge function
+      const { data, error } = await supabase.functions.invoke("otp-verify", {
+        body: {
+          phone: phone,
+          otp_code: otpCode,
+          otp_id: otp_id,
+        },
+      });
 
-      if (type === "register") {
-        const pendingData = localStorage.getItem("mpj_pending_registration");
-        if (pendingData) {
-          const data = JSON.parse(pendingData);
-          data.status = "verified_pending_payment";
-          data.verifiedAt = new Date().toISOString();
-          
-          const registrations = JSON.parse(localStorage.getItem("mpj_registrations") || "[]");
-          registrations.push(data);
-          localStorage.setItem("mpj_registrations", JSON.stringify(registrations));
-          localStorage.removeItem("mpj_pending_registration");
+      if (error) {
+        throw error;
+      }
+
+      if (data?.error) {
+        if (data.expired) {
+          toast({
+            title: "Kode Kadaluarsa",
+            description: "Kode OTP sudah tidak berlaku. Silakan minta kode baru.",
+            variant: "destructive",
+          });
+        } else if (data.max_attempts) {
+          toast({
+            title: "Terlalu Banyak Percobaan",
+            description: "Silakan minta kode OTP baru.",
+            variant: "destructive",
+          });
+          setAttemptsRemaining(0);
+        } else {
+          toast({
+            title: "Kode Salah",
+            description: `${data.error}. Sisa percobaan: ${data.attempts_remaining}`,
+            variant: "destructive",
+          });
+          setAttemptsRemaining(data.attempts_remaining);
         }
-      } else if (type === "claim") {
-        const pendingData = localStorage.getItem("mpj_pending_claim");
-        if (pendingData) {
-          const data = JSON.parse(pendingData);
-          data.status = "verified_pending_payment";
-          data.verifiedAt = new Date().toISOString();
-          
-          const claims = JSON.parse(localStorage.getItem("mpj_claims") || "[]");
-          claims.push(data);
-          localStorage.setItem("mpj_claims", JSON.stringify(claims));
-          localStorage.removeItem("mpj_pending_claim");
-        }
+        setOtp(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+        return;
+      }
+
+      // Success
+      toast({
+        title: "Verifikasi Berhasil!",
+        description: "Klaim berhasil. Akun Anda sedang dalam antrean verifikasi Regional.",
+      });
+
+      // Navigate based on type
+      if (type === "claim") {
+        navigate("/media-dashboard", {
+          state: {
+            verified: true,
+            pesantren_name: pesantren_name,
+            status: "pending",
+          },
+        });
+      } else if (type === "register") {
+        navigate("/payment", { state: { type } });
+      } else {
+        navigate("/verification-pending");
+      }
+    } catch (err: any) {
+      console.error("OTP verify error:", err);
+      toast({
+        title: "Gagal Memverifikasi",
+        description: err.message || "Terjadi kesalahan saat memverifikasi OTP",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!canResend || !phone) return;
+
+    setIsResending(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("otp-send", {
+        body: {
+          phone: phone,
+          pesantren_claim_id: pesantren_claim_id,
+        },
+      });
+
+      if (error) {
+        throw error;
       }
 
       toast({
-        title: "Verifikasi Berhasil!",
-        description: "Lanjutkan ke pembayaran",
+        title: "OTP Terkirim Ulang",
+        description: data?.message || "Kode baru telah dikirim ke nomor WhatsApp Anda",
       });
-      
-      navigate("/payment", { state: { type } });
-    }, 1200);
-  };
 
-  const handleResend = () => {
-    if (!canResend) return;
-
-    setCanResend(false);
-    setResendTimer(60);
-    toast({
-      title: "OTP Terkirim Ulang",
-      description: "Kode baru telah dikirim",
-    });
+      setCanResend(false);
+      setResendTimer(60);
+      setAttemptsRemaining(5);
+      setOtp(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
+    } catch (err: any) {
+      console.error("Resend error:", err);
+      toast({
+        title: "Gagal Mengirim Ulang",
+        description: err.message || "Terjadi kesalahan saat mengirim ulang OTP",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary via-primary/90 to-primary">
-      {/* Header - No Logo */}
+      {/* Header */}
       <div className="flex-shrink-0 pt-6 pb-4 px-4">
-        <Link to="/login" className="inline-flex items-center text-primary-foreground/80 text-sm mb-4">
+        <Link
+          to="/login"
+          className="inline-flex items-center text-primary-foreground/80 text-sm mb-4"
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Kembali
         </Link>
@@ -145,8 +233,11 @@ const VerifyOTP = () => {
             Masukkan kode 6 digit yang dikirim ke
           </p>
           {phone && (
-            <p className="text-sm font-semibold text-foreground mt-1">
-              {phone}
+            <p className="text-sm font-semibold text-foreground mt-1">{phone}</p>
+          )}
+          {pesantren_name && (
+            <p className="text-xs text-muted-foreground mt-2">
+              untuk klaim: <span className="font-medium">{pesantren_name}</span>
             </p>
           )}
         </div>
@@ -164,44 +255,70 @@ const VerifyOTP = () => {
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               className="w-11 h-12 text-center text-xl font-bold rounded-xl border-border/50 focus:border-emerald-500 bg-muted/30"
+              disabled={attemptsRemaining === 0}
             />
           ))}
         </div>
 
+        {/* Attempts remaining warning */}
+        {attemptsRemaining < 5 && attemptsRemaining > 0 && (
+          <p className="text-center text-sm text-amber-600 mb-4">
+            Sisa percobaan: {attemptsRemaining}
+          </p>
+        )}
+
         <Button
           onClick={handleVerify}
-          disabled={isLoading || otp.join("").length !== 6}
+          disabled={isLoading || otp.join("").length !== 6 || attemptsRemaining === 0}
           className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold touch-manipulation active:scale-[0.98] transition-transform"
         >
-          {isLoading ? "Memverifikasi..." : "Verifikasi"}
-          {!isLoading && <CheckCircle className="ml-2 h-4 w-4" />}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Memverifikasi...
+            </>
+          ) : (
+            <>
+              Verifikasi
+              <CheckCircle className="ml-2 h-4 w-4" />
+            </>
+          )}
         </Button>
 
         {/* Resend */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground mb-2">
-            Tidak menerima kode?
-          </p>
+          <p className="text-sm text-muted-foreground mb-2">Tidak menerima kode?</p>
           {canResend ? (
             <Button
               variant="ghost"
               onClick={handleResend}
+              disabled={isResending}
               className="text-amber-500 hover:text-amber-400"
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Kirim Ulang
+              {isResending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Mengirim...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Kirim Ulang
+                </>
+              )}
             </Button>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Kirim ulang dalam <span className="font-bold text-foreground">{resendTimer}s</span>
+              Kirim ulang dalam{" "}
+              <span className="font-bold text-foreground">{resendTimer}s</span>
             </p>
           )}
         </div>
 
-        {/* Demo Note */}
+        {/* Info Note */}
         <div className="mt-6 p-3 bg-muted/30 rounded-xl">
           <p className="text-xs text-center text-muted-foreground">
-            <span className="font-semibold">Demo:</span> Masukkan 6 digit apapun untuk lanjut
+            Kode OTP berlaku selama 10 menit dan hanya dapat digunakan satu kali.
           </p>
         </div>
       </div>
