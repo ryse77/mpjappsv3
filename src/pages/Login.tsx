@@ -70,7 +70,7 @@ const Login = () => {
       // For regular users, check pesantren_claims
       const { data: claim, error } = await supabase
         .from('pesantren_claims')
-        .select('status')
+        .select('status, jenis_pengajuan')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -94,19 +94,23 @@ const Login = () => {
           // Full access - go to dashboard
           navigate('/user', { replace: true });
           break;
-        case 'pending':
         case 'regional_approved':
+          // Regional approved - different behavior based on jenis_pengajuan
+          if (claim.jenis_pengajuan === 'klaim') {
+            // Klaim: Auto-activate and go to dashboard
+            navigate('/user', { replace: true });
+          } else {
+            // Pesantren Baru: Go to payment page
+            navigate('/payment', { replace: true });
+          }
+          break;
+        case 'pending':
           // Still in verification - go to pending page
           navigate('/verification-pending', { replace: true });
           break;
         case 'rejected':
-          // Claim rejected - show toast and logout
-          toast({
-            title: "Klaim Ditolak",
-            description: "Pengajuan klaim pesantren Anda ditolak. Silakan hubungi admin.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
+          // Claim rejected - redirect to account-rejected page
+          navigate('/account-rejected', { replace: true });
           break;
         default:
           navigate('/check-institution', { replace: true });
