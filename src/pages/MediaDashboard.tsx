@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -14,7 +14,8 @@ import {
   Zap,
   AlertTriangle,
   IdCard,
-  Calendar
+  Calendar,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,8 @@ import MPJHub from "@/components/media-dashboard/MPJHub";
 import Pengaturan from "@/components/media-dashboard/Pengaturan";
 import EventPage from "@/components/media-dashboard/EventPage";
 import EIDAsetPage from "@/components/media-dashboard/EIDAsetPage";
+import AktivasiNIPNIAM from "@/components/media-dashboard/AktivasiNIPNIAM";
+import BasicMemberBanner from "@/components/shared/BasicMemberBanner";
 
 interface KoordinatorData {
   nama: string;
@@ -42,20 +45,34 @@ interface KoordinatorData {
   photoUrl?: string;
 }
 
-// Menu order as per specification
-type ViewType = "beranda" | "identitas" | "administrasi" | "tim" | "event" | "eid" | "hub" | "pengaturan";
+// Menu order as per specification - includes aktivasi menu for unpaid users
+type ViewType = "beranda" | "identitas" | "administrasi" | "tim" | "event" | "eid" | "hub" | "pengaturan" | "aktivasi";
 
-// Menu order as per strict specification
-const menuItems = [
-  { id: "beranda" as ViewType, label: "BERANDA", icon: LayoutDashboard },
-  { id: "identitas" as ViewType, label: "IDENTITAS PESANTREN", icon: Building },
-  { id: "administrasi" as ViewType, label: "ADMINISTRASI", icon: CreditCard },
-  { id: "tim" as ViewType, label: "TIM MEDIA", icon: Users },
-  { id: "eid" as ViewType, label: "E-ID & ASET", icon: IdCard },
-  { id: "event" as ViewType, label: "EVENT", icon: Calendar, comingSoon: true },
-  { id: "hub" as ViewType, label: "MPJ HUB", icon: Layers, comingSoon: true },
-  { id: "pengaturan" as ViewType, label: "PENGATURAN", icon: Settings },
-];
+// Base menu items - aktivasi menu will be conditionally added
+const getMenuItems = (showAktivasi: boolean) => {
+  const baseItems = [
+    { id: "beranda" as ViewType, label: "BERANDA", icon: LayoutDashboard },
+    { id: "identitas" as ViewType, label: "IDENTITAS PESANTREN", icon: Building },
+    { id: "administrasi" as ViewType, label: "ADMINISTRASI", icon: CreditCard },
+    { id: "tim" as ViewType, label: "TIM MEDIA", icon: Users },
+    { id: "eid" as ViewType, label: "E-ID & ASET", icon: IdCard },
+    { id: "event" as ViewType, label: "EVENT", icon: Calendar, comingSoon: true },
+    { id: "hub" as ViewType, label: "MPJ HUB", icon: Layers, comingSoon: true },
+    { id: "pengaturan" as ViewType, label: "PENGATURAN", icon: Settings },
+  ];
+
+  if (showAktivasi) {
+    // Insert aktivasi menu after administrasi
+    baseItems.splice(3, 0, { 
+      id: "aktivasi" as ViewType, 
+      label: "AKTIVASI NIP/NIAM", 
+      icon: Sparkles,
+      highlight: true 
+    } as any);
+  }
+
+  return baseItems;
+};
 
 const MediaDashboard = () => {
   const navigate = useNavigate();
@@ -147,16 +164,26 @@ const MediaDashboard = () => {
     </div>
   );
 
+  // Determine if aktivasi menu should be shown (for unpaid users)
+  const showAktivasiMenu = paymentStatus === 'unpaid';
+  const menuItems = getMenuItems(showAktivasiMenu);
+
   const renderContent = () => {
     switch (activeView) {
       case "beranda":
         return (
-          <MediaDashboardHome 
-            paymentStatus={paymentStatus} 
-            profileLevel={profileLevel}
-            onNavigate={handleMenuClick}
-            debugProfile={isDebugMode ? profile : undefined}
-          />
+          <>
+            {/* Basic Member Banner - CTA for activation */}
+            {paymentStatus === 'unpaid' && (
+              <BasicMemberBanner onActivate={() => handleMenuClick("aktivasi")} />
+            )}
+            <MediaDashboardHome 
+              paymentStatus={paymentStatus} 
+              profileLevel={profileLevel}
+              onNavigate={handleMenuClick}
+              debugProfile={isDebugMode ? profile : undefined}
+            />
+          </>
         );
       case "identitas":
         return (
@@ -192,6 +219,15 @@ const MediaDashboard = () => {
             debugProfile={isDebugMode ? profile : undefined}
           />
         );
+      case "aktivasi":
+        return (
+          <AktivasiNIPNIAM 
+            onPaymentSubmitted={() => {
+              // Refresh the page to update payment status
+              window.location.reload();
+            }}
+          />
+        );
       case "event":
         return <EventPage />;
       case "hub":
@@ -200,12 +236,17 @@ const MediaDashboard = () => {
         return <Pengaturan />;
       default:
         return (
-          <MediaDashboardHome 
-            paymentStatus={paymentStatus} 
-            profileLevel={profileLevel}
-            onNavigate={handleMenuClick}
-            debugProfile={isDebugMode ? profile : undefined}
-          />
+          <>
+            {paymentStatus === 'unpaid' && (
+              <BasicMemberBanner onActivate={() => handleMenuClick("aktivasi")} />
+            )}
+            <MediaDashboardHome 
+              paymentStatus={paymentStatus} 
+              profileLevel={profileLevel}
+              onNavigate={handleMenuClick}
+              debugProfile={isDebugMode ? profile : undefined}
+            />
+          </>
         );
     }
   };
@@ -266,7 +307,9 @@ const MediaDashboard = () => {
                 "w-full flex items-center gap-3 px-3 py-3.5 rounded-lg transition-all duration-200 text-left",
                 activeView === item.id
                   ? "bg-white/20 text-white font-semibold border-l-4 border-[#f59e0b]"
-                  : "text-white/80 hover:bg-white/10 hover:text-white"
+                  : "text-white/80 hover:bg-white/10 hover:text-white",
+                // Highlight aktivasi menu with amber color
+                (item as any).highlight && activeView !== item.id && "bg-amber-500/20 text-amber-200 border-l-4 border-amber-400"
               )}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -274,6 +317,11 @@ const MediaDashboard = () => {
               {item.comingSoon && (
                 <Badge className="bg-amber-500/80 text-white text-[10px] px-1.5">
                   Soon
+                </Badge>
+              )}
+              {(item as any).highlight && (
+                <Badge className="bg-amber-500 text-white text-[10px] px-1.5">
+                  NEW
                 </Badge>
               )}
             </button>
